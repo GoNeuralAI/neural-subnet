@@ -18,6 +18,7 @@
 import typing
 import bittensor as bt
 import typing
+import pydantic
 
 
 # This is the protocol for the dummy miner and validator.
@@ -55,3 +56,6 @@ class NASynapse(bt.Synapse):
         - List[Image.Image]: The deserialized response, which is a list of several images measured in different axis
         """
         return self.out_obj
+
+class NAStatus(bt.Synapse):
+    status: dict = {}

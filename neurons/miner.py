@@ -23,7 +23,8 @@ import bittensor as bt
 
 # import base miner class which takes care of most of the boilerplate
 from neuralai.base.miner import BaseMinerNeuron
-from neuralai.protocol import NASynapse
+from neuralai.protocol import NASynapse, NAStatus
+from neuralai.miner.utils import set_status
 
 
 class Miner(BaseMinerNeuron):
@@ -40,6 +41,8 @@ class Miner(BaseMinerNeuron):
 
         # TODO(developer): Anything specific to your use case you can do here
 
+        self.miner_status = set_status()
+        bt.logging.info(f"Current Miner Status: {self.miner_status}")
     #
     async def forward(
         self, synapse: NASynapse
@@ -49,16 +52,16 @@ class Miner(BaseMinerNeuron):
         This method should be replaced with actual logic relevant to the miner's purpose.
 
         Args:
-            synapse (template.protocol.NASynapse): The synapse object containing the 'NASynapse_input' data.
+            synapse (neuralai.protocol.NASynapse): The synapse object containing the 'NASynapse_input' data.
 
         Returns:
-            template.protocol.NASynapse: The synapse object with the 'NASynapse_output' field set to twice the 'NASynapse_input' value.
+            neuralai.protocol.NASynapse: The synapse object with the 'NASynapse_output' field set to twice the 'NASynapse_input' value.
 
         The 'forward' function is a placeholder and should be overridden with logic that is appropriate for
         the miner's intended operation. This method demonstrates a basic transformation of input data.
         """
         # TODO(developer): Replace with actual implementation logic.
-        synapse.out_obj = synapse.in_na * 2
+        synapse.out_obj = synapse.in_na 
         return synapse
 
     async def blacklist(
@@ -159,6 +162,12 @@ class Miner(BaseMinerNeuron):
         )
         return priority
 
+    async def forward_status(self, synapse: NAStatus) -> NAStatus:
+        synapse.status = self.miner_status
+        return synapse
+    
+    async def blacklist_status(self, synpase: NAStatus) -> NAStatus:
+        return synpase
 
 # This is the main function, which runs the miner.
 if __name__ == "__main__":

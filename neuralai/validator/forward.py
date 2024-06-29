@@ -24,18 +24,26 @@ from neuralai.validator.reward import get_rewards
 from neuralai.utils.uids import get_random_uids
 from neuralai.validator.task_manager import TaskManager
 
+
 async def forward(self, synapse: NASynapse=None) -> NASynapse:
     """
     The forward function is called by the validator every time step.
 
     It is responsible for querying the network and scoring the responses.
 
-    Args:
-        self (:obj:`bittensor.neuron.Neuron`): The neuron object which contains all the necessary state for the validator.
-
+    - Forwarding requests to miners in multiple thread to ensure total time is around 1000 seconds. In each thread, we do:
+        - Calculating rewards if needed
+        - Updating scores based on rewards
+        - Saving the state
+    - Normalize weights based on incentive_distribution
+    - SET WEIGHTS!
+    - Sleep for 1000 seconds if needed
     """
     # TODO(developer): Define how the validator selects a miner to query, how often, etc.
     # get_random_uids is an example method, but you can replace it with your own.
+    
+    bt.logging.info("Checking available miners")
+    
     miner_uids = get_random_uids(self, k=self.config.neuron.sample_size)
 
     bt.logging.info(f'Sending challenges to miners: {miner_uids}')
@@ -57,17 +65,17 @@ async def forward(self, synapse: NASynapse=None) -> NASynapse:
             synapse=nas,
             # All responses have the deserialize function called on them before returning.
             # You are encouraged to define your own deserialization function.
-            deserialize=True,
+            deserialize=False,
         )
     
         bt.logging.info(f"Received responses from miners: {responses}")
         
         # Log the results for monitoring purposes.
-        rewards = get_rewards(self, query=self.step, responses=responses)
+        # rewards = get_rewards(self, query=self.step, responses=responses)
 
-        bt.logging.info(f"Scored responses: {rewards}")
+        bt.logging.info(f"Scored responses:")
         # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
-        self.update_scores(rewards, miner_uids)
+        # self.update_scores(rewards, miner_uids)
     else:
         bt.logging.error(f"No prompt is ready yet")
     # TODO(developer): Define how the validator scores responses.

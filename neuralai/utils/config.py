@@ -164,6 +164,13 @@ def add_miner_args(cls, parser):
         default="opentensor-dev",
         help="Wandb entity to log to.",
     )
+    
+    parser.add_argument(
+        "--miner.status",
+        type=str,
+        default="idle",
+        help="Miners are able to work or not"
+    )
 
 
 def add_validator_args(cls, parser):

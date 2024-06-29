@@ -17,7 +17,7 @@
 
 
 import time
-
+from typing import Tuple
 # Bittensor
 import bittensor as bt
 
@@ -26,6 +26,8 @@ from neuralai.base.validator import BaseValidatorNeuron
 # Bittensor Validator Template:
 from neuralai.validator import forward
 from neuralai.protocol import NASynapse
+from neuralai.validator.task_manager import TaskManager
+from neuralai.validator.miner_manager import MinerManager
 
 
 class Validator(BaseValidatorNeuron):
@@ -36,9 +38,13 @@ class Validator(BaseValidatorNeuron):
 
     This class provides reasonable default behavior for a validator such as keeping a moving average of the scores of the miners and using them to set weights at the end of each epoch. Additionally, the scores are reset for new hotkeys at the end of each epoch.
     """
+    
+    task_manager: TaskManager
 
     def __init__(self, config=None):
         super(Validator, self).__init__(config=config)
+        
+        self.miner_manager = MinerManager
 
         bt.logging.info("load_state()")
         self.load_state()
@@ -58,8 +64,20 @@ class Validator(BaseValidatorNeuron):
         return await forward(self, synapse)
     
     async def forward_fn(self, synapse: NASynapse=None):
+        time.sleep(5)
         return await self.forward(synapse)
+    
+    async def blacklist_fn(self, synapse: NASynapse) -> Tuple[bool, str]:
+        # TODO add hotkeys to blacklist here as needed
+        # blacklist the hotkeys mining on the subnet to prevent any potential issues
+        #hotkeys_to_blacklist = [h for i,h in enumerate(self.hotkeys) if self.metagraph.S[i] < 20000 and h != self.wallet.hotkey.ss58_address]
+        #if synapse.dendrite.hotkey in hotkeys_to_blacklist:
+        #    return True, "Blacklisted hotkey - miners can't connect, use a diff hotkey."
+        return False, ""
 
+    async def priority_fn(self, synapse: NASynapse) -> float:
+        # high priority for organic traffic
+        return 1000000.0
 
 # The main function parses the configuration and runs the validator.
 if __name__ == "__main__":

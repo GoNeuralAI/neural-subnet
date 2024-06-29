@@ -25,6 +25,7 @@ def check_uid_availability(
     # Available otherwise.
     return True
 
+def get_available_uids ()
 
 def get_random_uids(
     self, k: int, exclude: List[int] = None
