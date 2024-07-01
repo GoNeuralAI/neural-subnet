@@ -19,6 +19,7 @@
 
 import time
 import typing
+from typing import Tuple
 import bittensor as bt
 
 # import base miner class which takes care of most of the boilerplate
@@ -41,7 +42,7 @@ class Miner(BaseMinerNeuron):
 
         # TODO(developer): Anything specific to your use case you can do here
 
-        self.miner_status = set_status()
+        self.miner_status = set_status(self)
         bt.logging.info(f"Current Miner Status: {self.miner_status}")
     #
     async def forward(
@@ -66,7 +67,7 @@ class Miner(BaseMinerNeuron):
 
     async def blacklist(
         self, synapse: NASynapse
-    ) -> typing.Tuple[bool, str]:
+    ) -> Tuple[bool, str]:
         """
         Determines whether an incoming request should be blacklisted and thus ignored. Your implementation should
         define the logic for blacklisting requests based on your needs and desired security parameters.
@@ -125,6 +126,13 @@ class Miner(BaseMinerNeuron):
             f"Not Blacklisting recognized hotkey {synapse.dendrite.hotkey}"
         )
         return False, "Hotkey recognized!"
+    
+    async def forward_status(self, synapse: NAStatus) -> NAStatus:
+        synapse.status = self.miner_status
+        return synapse
+    
+    async def blacklist_status(self, synpase: NAStatus) -> Tuple[bool, str]:
+        return False, "All passed!"
 
     async def priority(self, synapse: NASynapse) -> float:
         """
@@ -161,13 +169,6 @@ class Miner(BaseMinerNeuron):
             f"Prioritizing {synapse.dendrite.hotkey} with value: {priority}"
         )
         return priority
-
-    async def forward_status(self, synapse: NAStatus) -> NAStatus:
-        synapse.status = self.miner_status
-        return synapse
-    
-    async def blacklist_status(self, synpase: NAStatus) -> NAStatus:
-        return synpase
 
 # This is the main function, which runs the miner.
 if __name__ == "__main__":
