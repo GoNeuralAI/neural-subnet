@@ -168,7 +168,7 @@ def add_miner_args(cls, parser):
     parser.add_argument(
         "--miner.status",
         type=str,
-        default="idle",
+        default="idle", #idle, working, waiting
         help="Miners are able to work or not"
     )
 

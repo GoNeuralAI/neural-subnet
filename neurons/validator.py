@@ -39,19 +39,18 @@ class Validator(BaseValidatorNeuron):
     This class provides reasonable default behavior for a validator such as keeping a moving average of the scores of the miners and using them to set weights at the end of each epoch. Additionally, the scores are reset for new hotkeys at the end of each epoch.
     """
     
-    task_manager: TaskManager
-
     def __init__(self, config=None):
         super(Validator, self).__init__(config=config)
         
-        self.miner_manager = MinerManager
+        self.task_manager = TaskManager()
+        self.miner_manager = MinerManager(validator=self)
 
         bt.logging.info("load_state()")
         self.load_state()
 
         # TODO(developer): Anything specific to your use case you can do here
 
-    async def forward(self, synapse: NASynapse=None):
+    def forward(self, synapse: NASynapse=None):
         """
         Validator forward pass. Consists of:
         - Generating the query
@@ -60,12 +59,13 @@ class Validator(BaseValidatorNeuron):
         - Rewarding the miners
         - Updating the scores
         """
+        
         # TODO(developer): Rewrite this function based on your protocol definition.
-        return await forward(self, synapse)
+        return forward(self, synapse)
     
     async def forward_fn(self, synapse: NASynapse=None):
         time.sleep(5)
-        return await self.forward(synapse)
+        return self.forward(synapse)
     
     async def blacklist_fn(self, synapse: NASynapse) -> Tuple[bool, str]:
         # TODO add hotkeys to blacklist here as needed

@@ -14,10 +14,11 @@ class MinerManager:
             deserialize=False,
             timeout=10
         )
+        bt.logging.info(f"Miner Status: {responses}")
         return None
     
     def update_miner_status(self):
-        avail_miners = self.get_miner_status()
+        avail_miners = self.get_miner_status() 
         
         if not avail_miners:
             bt.logging.warning("No miners are available now.")

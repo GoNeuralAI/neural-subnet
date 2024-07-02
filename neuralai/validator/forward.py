@@ -25,7 +25,7 @@ from neuralai.utils.uids import get_random_uids
 from neuralai.validator.task_manager import TaskManager
 
 
-async def forward(self, synapse: NASynapse=None) -> NASynapse:
+def forward(self, synapse: NASynapse=None) -> NASynapse:
     """
     The forward function is called by the validator every time step.
 
@@ -44,16 +44,19 @@ async def forward(self, synapse: NASynapse=None) -> NASynapse:
     
     bt.logging.info("Checking available miners")
     
+    self.miner_manager.update_miner_status()
+    
     miner_uids = get_random_uids(self, k=self.config.neuron.sample_size)
 
     bt.logging.info(f'Sending challenges to miners: {miner_uids}')
-    tm = TaskManager()
+    
+    nas = NASynapse()
 
     if synapse: #in case of Validator API from users
         nas = synapse
         
     else:
-        task = tm.prepare_task()
+        task = self.task_manager.prepare_task()
         nas = NASynapse(in_na=task)
 
     if task:        
