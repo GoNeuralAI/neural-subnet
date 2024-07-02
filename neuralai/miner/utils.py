@@ -1,5 +1,3 @@
 def set_status(self):
-    miner_status = {
-        "status": self.config.miner.status
-    }
+    miner_status = "idle"
     return miner_status

@@ -25,11 +25,13 @@ def check_uid_availability(
     # Available otherwise.
     return True
 
-def get_available_uids ():
-    return True
+def get_selected_uids(self, avails: List[int] = None, count: int = 1):
+    if len(avails) <= count :
+        return avails
+    return random.sample(avails, count)
 
 def get_random_uids(
-    self, k: int, exclude: List[int] = None
+    self, avails: List[int] = None, k: int = None, exclude: List[int] = None
 ) -> np.ndarray:
     """Returns k available random uids from the metagraph.
     Args:
@@ -42,6 +44,8 @@ def get_random_uids(
     """
     candidate_uids = []
     avail_uids = []
+    
+    bt.logging.debug(f"Uids type: {self.metagraph.n.item()}")
 
     for uid in range(self.metagraph.n.item()):
         uid_is_available = check_uid_availability(

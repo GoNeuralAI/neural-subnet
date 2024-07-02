@@ -248,6 +248,13 @@ def add_validator_args(cls, parser):
         help="The name of the project where you are sending the new run.",
         default="opentensor-dev",
     )
+    
+    parser.add_argument(
+        "--neuron.challenge_count",
+        type=int,
+        help="The miner challenge count at once",
+        default=5,
+    )
 
 
 def config(cls):

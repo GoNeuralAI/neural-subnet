@@ -21,7 +21,7 @@ import bittensor as bt
 
 from neuralai.protocol import NASynapse
 from neuralai.validator.reward import get_rewards
-from neuralai.utils.uids import get_random_uids
+from neuralai.utils.uids import get_selected_uids
 from neuralai.validator.task_manager import TaskManager
 
 
@@ -43,10 +43,10 @@ def forward(self, synapse: NASynapse=None) -> NASynapse:
     # get_random_uids is an example method, but you can replace it with your own.
     
     bt.logging.info("Checking available miners")
+    avail_uids = self.miner_manager.update_miner_status()
+    bt.logging.info(f"available miners are: {avail_uids}")
     
-    self.miner_manager.update_miner_status()
-    
-    miner_uids = get_random_uids(self, k=self.config.neuron.sample_size)
+    miner_uids = get_selected_uids(self, avails=avail_uids, count=self.config.neuron.challenge_count)
 
     bt.logging.info(f'Sending challenges to miners: {miner_uids}')
     
@@ -58,6 +58,7 @@ def forward(self, synapse: NASynapse=None) -> NASynapse:
     else:
         task = self.task_manager.prepare_task()
         nas = NASynapse(in_na=task)
+        bt.logging.debug(f"nas: {nas}")
 
     if task:        
         # The dendrite client queries the network.

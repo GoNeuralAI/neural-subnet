@@ -40,13 +40,12 @@ import pydantic
 
 
 class NASynapse(bt.Synapse):
-
     # Required request input, filled by sending dendrite caller.
     in_na: str = ""
-    in_mode: int = 1 #1: text | 2: image
-
     # Optional request output, filled by receiving axon.
     out_obj: str = "Hello World"
+    
+    computed_body_hash: str = pydantic.Field("", title="Computed Body Hash", frozen=False)
 
     def deserialize(self) -> str:
         """
@@ -58,4 +57,5 @@ class NASynapse(bt.Synapse):
         return self.out_obj
 
 class NAStatus(bt.Synapse):
-    status: dict = {}
+    status: str = ""
+    computed_body_hash: str = pydantic.Field("", title="Computed Body Hash", frozen=False)
