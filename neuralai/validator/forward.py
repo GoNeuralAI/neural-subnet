@@ -19,13 +19,13 @@
 
 import bittensor as bt
 
-from neuralai.protocol import NASynapse
+from neuralai.protocol import NATextSynapse
 from neuralai.validator.reward import get_rewards
 from neuralai.utils.uids import get_selected_uids
 from neuralai.validator.task_manager import TaskManager
 
 
-def forward(self, synapse: NASynapse=None) -> NASynapse:
+def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     """
     The forward function is called by the validator every time step.
 
@@ -50,14 +50,14 @@ def forward(self, synapse: NASynapse=None) -> NASynapse:
 
     bt.logging.info(f'Sending challenges to miners: {miner_uids}')
     
-    nas = NASynapse()
+    nas = NATextSynapse()
 
     if synapse: #in case of Validator API from users
         nas = synapse
         
     else:
         task = self.task_manager.prepare_task()
-        nas = NASynapse(in_na=task)
+        nas = NATextSynapse(prompt_text=task, timeout=self.config.generation.timeout)
         bt.logging.debug(f"nas: {nas}")
 
     if task:        

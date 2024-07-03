@@ -24,9 +24,8 @@ import bittensor as bt
 
 # import base miner class which takes care of most of the boilerplate
 from neuralai.base.miner import BaseMinerNeuron
-from neuralai.protocol import NASynapse, NAStatus
-from neuralai.miner.utils import set_status
-
+from neuralai.protocol import NATextSynapse, NAImageSynapse, NAStatus
+from neuralai.miner.utils import set_status, generate
 
 class Miner(BaseMinerNeuron):
     """
@@ -46,57 +45,51 @@ class Miner(BaseMinerNeuron):
         bt.logging.info(f"Current Miner Status: {self.miner_status}")
     #
     async def forward(
-        self, synapse: NASynapse
-    ) -> NASynapse:
+        self, synapse: NATextSynapse
+    ) -> NATextSynapse:
         """
-        Processes the incoming 'NASynapse' synapse by performing a predefined operation on the input data.
+        Processes the incoming 'NATextSynapse' synapse by performing a predefined operation on the input data.
         This method should be replaced with actual logic relevant to the miner's purpose.
 
         Args:
-            synapse (neuralai.protocol.NASynapse): The synapse object containing the 'NASynapse_input' data.
+            synapse (neuralai.protocol.NATextSynapse): The synapse object containing the 'NATextSynapse_input' data.
 
         Returns:
-            neuralai.protocol.NASynapse: The synapse object with the 'NASynapse_output' field set to twice the 'NASynapse_input' value.
+            neuralai.protocol.NATextSynapse: The synapse object with the 'NATextSynapse_output' field set to twice the 'NATextSynapse_input' value.
 
         The 'forward' function is a placeholder and should be overridden with logic that is appropriate for
         the miner's intended operation. This method demonstrates a basic transformation of input data.
         """
         # TODO(developer): Replace with actual implementation logic.
-        synapse.out_obj = synapse.in_na 
+        # synapse.out_obj = synapse.in_na 
+        
+        bt.logging.info("3D Generation Started. It would take for a while")
+        await generate(self, synapse)
+        return synapse
+    
+    async def forward_image(
+        self, synapse: NAImageSynapse
+    ) -> NAImageSynapse:
+        """
+        Processes the incoming 'NAImageSynapse' synapse by performing a predefined operation on the input data.
+        This method should be replaced with actual logic relevant to the miner's purpose.
+
+        Args:
+            synapse (neuralai.protocol.NAImageSynapse): The synapse object containing the 'NAImageSynapse_input' data.
+
+        Returns:
+            neuralai.protocol.NAImageSynapse: The synapse object with the 'NAImageSynapse_output' field set to twice the 'NATextSynapse_input' value.
+
+        The 'forward' function is a placeholder and should be overridden with logic that is appropriate for
+        the miner's intended operation. This method demonstrates a basic transformation of input data.
+        """
+        # TODO(developer): Replace with actual implementation logic.
+        # synapse.out_obj = synapse.in_na 
         return synapse
 
     async def blacklist(
-        self, synapse: NASynapse
+        self, synapse: NATextSynapse
     ) -> Tuple[bool, str]:
-        """
-        Determines whether an incoming request should be blacklisted and thus ignored. Your implementation should
-        define the logic for blacklisting requests based on your needs and desired security parameters.
-
-        Blacklist runs before the synapse data has been deserialized (i.e. before synapse.data is available).
-        The synapse is instead contracted via the headers of the request. It is important to blacklist
-        requests before they are deserialized to avoid wasting resources on requests that will be ignored.
-
-        Args:
-            synapse (template.protocol.NASynapse): A synapse object constructed from the headers of the incoming request.
-
-        Returns:
-            Tuple[bool, str]: A tuple containing a boolean indicating whether the synapse's hotkey is blacklisted,
-                            and a string providing the reason for the decision.
-
-        This function is a security measure to prevent resource wastage on undesired requests. It should be enhanced
-        to include checks against the metagraph for entity registration, validator status, and sufficient stake
-        before deserialization of synapse data to minimize processing overhead.
-
-        Example blacklist logic:
-        - Reject if the hotkey is not a registered entity within the metagraph.
-        - Consider blacklisting entities that are not validators or have insufficient stake.
-
-        In practice it would be wise to blacklist requests from entities that are not validators, or do not have
-        enough stake. This can be checked via metagraph.S and metagraph.validator_permit. You can always attain
-        the uid of the sender via a metagraph.hotkeys.index( synapse.dendrite.hotkey ) call.
-
-        Otherwise, allow the request to be processed further.
-        """
 
         if synapse.dendrite is None or synapse.dendrite.hotkey is None:
             bt.logging.warning("Received a request without a dendrite or hotkey.")
@@ -127,6 +120,12 @@ class Miner(BaseMinerNeuron):
         )
         return False, "Hotkey recognized!"
     
+    async def blacklist_image(
+        self, synapse: NAImageSynapse
+    ) -> Tuple[bool, str]:
+
+        return False, "Hotkey recognized!"
+    
     async def forward_status(self, synapse: NAStatus) -> NAStatus:
         synapse.status = self.miner_status
         return synapse
@@ -134,7 +133,7 @@ class Miner(BaseMinerNeuron):
     async def blacklist_status(self, synpase: NAStatus) -> Tuple[bool, str]:
         return False, "All passed!"
 
-    async def priority(self, synapse: NASynapse) -> float:
+    async def priority(self, synapse: NATextSynapse) -> float:
         """
         The priority function determines the order in which requests are handled. More valuable or higher-priority
         requests are processed before others. You should design your own priority mechanism with care.
@@ -142,7 +141,7 @@ class Miner(BaseMinerNeuron):
         This implementation assigns priority to incoming requests based on the calling entity's stake in the metagraph.
 
         Args:
-            synapse (template.protocol.NASynapse): The synapse object that contains metadata about the incoming request.
+            synapse (template.protocol.NATextSynapse): The synapse object that contains metadata about the incoming request.
 
         Returns:
             float: A priority score derived from the stake of the calling entity.

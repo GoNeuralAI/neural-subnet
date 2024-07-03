@@ -119,14 +119,6 @@ def add_args(cls, parser):
         default=False,
     )
 
-    parser.add_argument(
-        "--wandb.notes",
-        type=str,
-        help="Notes to add to the wandb run.",
-        default="",
-    )
-
-
 def add_miner_args(cls, parser):
     """Add miner specific arguments to the parser."""
 
@@ -172,6 +164,12 @@ def add_miner_args(cls, parser):
         help="Miners are able to work or not"
     )
 
+    parser.add_argument(
+        "--generation.endpoint",
+        type=str,
+        help="Miner 3D Generation Endpoint",
+        default="http://127.0.0.1:8093",
+    )
 
 def add_validator_args(cls, parser):
     """Add validator specific arguments to the parser."""
@@ -255,7 +253,13 @@ def add_validator_args(cls, parser):
         help="The miner challenge count at once",
         default=5,
     )
-
+    
+    parser.add_argument(
+        "--generation.timeout",
+        type=int,
+        help="Miner 3D Generation Time",
+        default=1000
+    )
 
 def config(cls):
     """

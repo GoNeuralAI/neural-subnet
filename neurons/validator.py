@@ -25,7 +25,7 @@ import bittensor as bt
 from neuralai.base.validator import BaseValidatorNeuron
 # Bittensor Validator Template:
 from neuralai.validator import forward
-from neuralai.protocol import NASynapse
+from neuralai.protocol import NATextSynapse
 from neuralai.validator.task_manager import TaskManager
 from neuralai.validator.miner_manager import MinerManager
 
@@ -50,7 +50,7 @@ class Validator(BaseValidatorNeuron):
 
         # TODO(developer): Anything specific to your use case you can do here
 
-    def forward(self, synapse: NASynapse=None):
+    def forward(self, synapse: NATextSynapse=None):
         """
         Validator forward pass. Consists of:
         - Generating the query
@@ -63,11 +63,11 @@ class Validator(BaseValidatorNeuron):
         # TODO(developer): Rewrite this function based on your protocol definition.
         return forward(self, synapse)
     
-    async def forward_fn(self, synapse: NASynapse=None):
+    async def forward_fn(self, synapse: NATextSynapse=None):
         time.sleep(5)
         return self.forward(synapse)
     
-    async def blacklist_fn(self, synapse: NASynapse) -> Tuple[bool, str]:
+    async def blacklist_fn(self, synapse: NATextSynapse) -> Tuple[bool, str]:
         # TODO add hotkeys to blacklist here as needed
         # blacklist the hotkeys mining on the subnet to prevent any potential issues
         #hotkeys_to_blacklist = [h for i,h in enumerate(self.hotkeys) if self.metagraph.S[i] < 20000 and h != self.wallet.hotkey.ss58_address]
@@ -75,7 +75,7 @@ class Validator(BaseValidatorNeuron):
         #    return True, "Blacklisted hotkey - miners can't connect, use a diff hotkey."
         return False, ""
 
-    async def priority_fn(self, synapse: NASynapse) -> float:
+    async def priority_fn(self, synapse: NATextSynapse) -> float:
         # high priority for organic traffic
         return 1000000.0
 

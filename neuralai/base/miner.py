@@ -61,6 +61,9 @@ class BaseMinerNeuron(BaseNeuron):
             forward_fn=self.forward,
             blacklist_fn=self.blacklist,
         ).attach(
+            forward_fn=self.forward_image,
+            blacklist_fn=self.blacklist_image,
+        ).attach(
             forward_fn=self.forward_status,
         )
         bt.logging.info(f"Axon created: {self.axon}")
