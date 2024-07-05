@@ -26,9 +26,8 @@ def check_uid_availability(
     return True
 
 def get_selected_uids(self, avails: List[int] = None, count: int = 1):
-    if len(avails) <= count :
-        return avails
-    return random.sample(avails, count)
+    all_uids = self.metagraph.uids
+    sel_uids = random.sample(all_uids, count)
 
 def get_random_uids(
     self, avails: List[int] = None, k: int = None, exclude: List[int] = None

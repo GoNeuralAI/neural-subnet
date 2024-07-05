@@ -4,32 +4,31 @@ import aiohttp
 from aiohttp import ClientTimeout
 
 
-def set_status(self):
-    miner_status = "idle"
-    return miner_status
+def set_status(self, status: str="idle"):
+    self.miner_status = status
 
 async def generate(self, synapse: bt.Synapse):
     url = urllib.parse.urljoin(self.config.generation.endpoint, "/generate/")
     timeout = synapse.timeout
-    bt.logging.debug(f"timeout type: {type(timeout)}")
+    # bt.logging.debug(f"timeout type: {type(timeout)}")
     prompt = synapse.prompt_text
     
-    await _generate_from_text(gen_url=url, timeout=timeout, prompt=prompt)
-    
-    synapse.out_obj = "Time is Gold!!!"
+    result = await _generate_from_text(gen_url=url, timeout=timeout, prompt=prompt)
+    bt.logging.debug(f"generation result: {result}")
+    synapse.out_obj = result.content
+    synapse.timeout = result.timeout
     return synapse
 
 async def _generate_from_text(gen_url: str, timeout: int, prompt: str):
     bt.logging.info(f"Generating from text. Generation prompt: {prompt}")
-    bt.logging.debug(prompt)
     
     client_timeout = ClientTimeout(total=float(timeout))
-    async with aiohttp.ClientSession(timeout=client_timeout) as session:
+    async with aiohttp.ClientSession() as session:
         try:
             async with session.post(gen_url, data={"prompt": prompt}) as response:
                 if response.status == 200:
                     bt.logging.info("Generated successfully")
-                    result = await response.text()
+                    result = response
                     return result
                 else:
                     bt.logging.error(f"Generation failed. Please try again.: {response.status}")

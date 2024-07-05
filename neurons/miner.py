@@ -41,7 +41,7 @@ class Miner(BaseMinerNeuron):
 
         # TODO(developer): Anything specific to your use case you can do here
 
-        self.miner_status = set_status(self)
+        set_status(self, self.config.miner.status)
         bt.logging.info(f"Current Miner Status: {self.miner_status}")
     #
     async def forward(
@@ -174,4 +174,4 @@ if __name__ == "__main__":
     with Miner() as miner:
         while True:
             bt.logging.info(f"Miner running... {time.time()}")
-            time.sleep(5)
+            time.sleep(20)
