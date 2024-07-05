@@ -14,7 +14,7 @@ class MinerManager:
             deserialize=False,
             timeout=10
         )
-        bt.logging.info(f"Miner Status: {responses}")
+        # bt.logging.info(f"Miner Status: {responses}")
         responses = {
             uid: response.status
             for uid, response in zip(all_uids, responses)
