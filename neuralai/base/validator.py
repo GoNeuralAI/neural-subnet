@@ -161,7 +161,7 @@ class BaseValidatorNeuron(BaseNeuron):
                 # Sync metagraph and potentially set weights.
                 
                 import time
-                time.sleep(5)
+                time.sleep(1)
                 
                 if self.step % 5 == 0:
                     self.sync()
