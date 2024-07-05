@@ -1,6 +1,7 @@
 import bittensor as bt
 import urllib.parse
 import aiohttp
+from aiohttp import ClientTimeout
 
 
 def set_status(self):
@@ -20,9 +21,10 @@ async def generate(self, synapse: bt.Synapse):
 
 async def _generate_from_text(gen_url: str, timeout: int, prompt: str):
     bt.logging.info(f"Generating from text. Generation prompt: {prompt}")
-    bt.logging.debug(gen_url)
+    bt.logging.debug(prompt)
     
-    async with aiohttp.ClientSession(timeout) as session:
+    client_timeout = ClientTimeout(total=float(timeout))
+    async with aiohttp.ClientSession(timeout=client_timeout) as session:
         try:
             async with session.post(gen_url, data={"prompt": prompt}) as response:
                 if response.status == 200:

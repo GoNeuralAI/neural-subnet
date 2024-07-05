@@ -42,9 +42,13 @@ def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     # TODO(developer): Define how the validator selects a miner to query, how often, etc.
     # get_random_uids is an example method, but you can replace it with your own.
     
-    bt.logging.info("Checking available miners")
+    bt.logging.info("Checking available miners...")
     avail_uids = self.miner_manager.update_miner_status()
-    bt.logging.info(f"available miners are: {avail_uids}")
+    
+    if not avail_uids:
+        return
+    
+    bt.logging.info(f"Available miners are: {avail_uids}")
     
     miner_uids = get_selected_uids(self, avails=avail_uids, count=self.config.neuron.challenge_count)
 

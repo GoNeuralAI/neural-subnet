@@ -130,7 +130,7 @@ class BaseNeuron(ABC):
             self.set_weights()
 
         # Always save state.
-        # self.save_state()
+        self.save_state()
 
     def check_registered(self):
         # --- Check for registration.

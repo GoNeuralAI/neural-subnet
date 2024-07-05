@@ -65,7 +65,7 @@ class Validator(BaseValidatorNeuron):
     
     async def forward_fn(self, synapse: NATextSynapse=None):
         time.sleep(5)
-        return self.forward(synapse)
+        return await self.forward(synapse)
     
     async def blacklist_fn(self, synapse: NATextSynapse) -> Tuple[bool, str]:
         # TODO add hotkeys to blacklist here as needed
@@ -84,4 +84,4 @@ if __name__ == "__main__":
     with Validator() as validator:
         while True:
             bt.logging.info(f"Validator running... {time.time()}")
-            time.sleep(5)
+            time.sleep(10)
