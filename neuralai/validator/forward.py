@@ -62,8 +62,7 @@ def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     else:
         task = self.task_manager.prepare_task()
         nas = NATextSynapse(prompt_text=task, timeout=self.config.generation.timeout)
-        bt.logging.debug(f"nas: {nas}")
-
+        bt.logging.info(f"Sending task: {task}")
     if task:        
         # The dendrite client queries the network.
         responses = self.dendrite.query(
