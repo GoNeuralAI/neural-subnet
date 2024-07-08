@@ -20,31 +20,19 @@ def check_uid_availability(
         return False
     # Filter validator permit > 1024 stake.
     if metagraph.validator_permit[uid]:
-        if metagraph.S[uid] > vpermit_tao_limit:
+        if metagraph.S[uid] >= vpermit_tao_limit:
             return False
     # Available otherwise.
     return True
 
-def get_selected_uids(self, avails: List[int] = None, count: int = 1):
-    all_uids = self.metagraph.uids
-    sel_uids = random.sample(all_uids, count)
-
-def get_random_uids(
-    self, avails: List[int] = None, k: int = None, exclude: List[int] = None
+def get_forward_uids(
+    self, count: int = None, exclude: List[int] = None
 ) -> np.ndarray:
-    """Returns k available random uids from the metagraph.
-    Args:
-        k (int): Number of uids to return.
-        exclude (List[int]): List of uids to exclude from the random sampling.
-    Returns:
-        uids (np.ndarray): Randomly sampled available uids.
-    Notes:
-        If `k` is larger than the number of available `uids`, set `k` to the number of available `uids`.
-    """
+    
     candidate_uids = []
     avail_uids = []
     
-    bt.logging.debug(f"Uids type: {self.metagraph.n.item()}")
+    # bt.logging.debug(f"Uids type: {self.metagraph.n.item()}")
 
     for uid in range(self.metagraph.n.item()):
         uid_is_available = check_uid_availability(
@@ -56,14 +44,14 @@ def get_random_uids(
             avail_uids.append(uid)
             if uid_is_not_excluded:
                 candidate_uids.append(uid)
-    # If k is larger than the number of available uids, set k to the number of available uids.
-    k = min(k, len(avail_uids))
+    # If count is larger than the number of available uids, set count to the number of available uids.
+    count = min(count, len(avail_uids))
     # Check if candidate_uids contain enough for querying, if not grab all avaliable uids
     available_uids = candidate_uids
-    if len(candidate_uids) < k:
+    if len(candidate_uids) < count:
         available_uids += random.sample(
             [uid for uid in avail_uids if uid not in candidate_uids],
-            k - len(candidate_uids),
+            count - len(candidate_uids),
         )
-    uids = np.array(random.sample(available_uids, k))
+    uids = np.array(random.sample(available_uids, count))
     return uids
