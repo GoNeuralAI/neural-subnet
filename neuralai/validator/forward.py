@@ -21,7 +21,7 @@ import bittensor as bt
 
 from neuralai.protocol import NATextSynapse
 from neuralai.validator.reward import get_rewards
-from neuralai.utils.uids import get_selected_uids
+from neuralai.utils.uids import get_forward_uids
 from neuralai.validator.task_manager import TaskManager
 
 
@@ -43,16 +43,27 @@ def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     # get_random_uids is an example method, but you can replace it with your own.
     
     bt.logging.info("Checking available miners...")
-    avail_uids = self.miner_manager.update_miner_status()
+    avail_uids = get_forward_uids(self, count=self.config.neuron.challenge_count)
     
-    if not avail_uids:
-        return
+    bt.logging.info(f"Selected miners are: {avail_uids}")
     
-    bt.logging.info(f"Available miners are: {avail_uids}")
+    forward_uids = self.miner_manager.get_miner_status(uids=avail_uids)
     
-    miner_uids = get_selected_uids(self, avails=avail_uids, count=self.config.neuron.challenge_count)
+    if not forward_uids:
+        bt.logging.warning("No miners are available!")
+    else:
+        bt.logging.info(f"Available miners are: {forward_uids}")
+    
+    # avail_uids = self.miner_manager.update_miner_status()
+    
+    # if not avail_uids:
+    #     return
+    
+    # bt.logging.info(f"Available miners are: {avail_uids}")
+    
+    # miner_uids = get_selected_uids(self, avails=avail_uids, count=self.config.neuron.challenge_count)
 
-    bt.logging.info(f'Sending challenges to miners: {miner_uids}')
+    # bt.logging.info(f'Sending challenges to miners: {miner_uids}')
     
     nas = NATextSynapse()
 
@@ -63,11 +74,11 @@ def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
         task = self.task_manager.prepare_task()
         nas = NATextSynapse(prompt_text=task, timeout=self.config.generation.timeout)
         bt.logging.info(f"Sending task: {task}")
-    if task:        
+    if task:
         # The dendrite client queries the network.
         responses = self.dendrite.query(
             # Send the query to selected miner axons in the network.
-            axons=[self.metagraph.axons[uid] for uid in miner_uids],
+            axons=[self.metagraph.axons[uid] for uid in forward_uids],
             # Construct a dummy query. This simply contains a single integer.
             synapse=nas,
             # All responses have the deserialize function called on them before returning.
