@@ -64,7 +64,7 @@ class Miner(BaseMinerNeuron):
         # synapse.out_obj = synapse.in_na 
         
         bt.logging.info("3D Generation Started. It would take for a while")
-        await generate(self, synapse)
+        synapse = await generate(self, synapse)
         return synapse
     
     async def forward_image(

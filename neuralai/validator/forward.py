@@ -86,7 +86,7 @@ def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             deserialize=False,
         )
     
-        # bt.logging.info(f"Received responses from miners: {responses}")
+        bt.logging.info(f"Received responses from miners: {responses}")
         
         # Log the results for monitoring purposes.
         # rewards = get_rewards(self, query=self.step, responses=responses)
