@@ -32,7 +32,7 @@ from src.utils.infer_util import remove_background, resize_foreground, save_vide
 parser = argparse.ArgumentParser()
 parser.add_argument('config', type=str, help='Path to config file.')
 # parser.add_argument('input_path', type=str, help='Path to input image or directory.')
-parser.add_argument("--port", type=int, default=43826)
+parser.add_argument("--port", type=int, default=8093)
 parser.add_argument('--output_path', type=str, default='outputs/', help='Temporary output directory.')
 parser.add_argument('--diffusion_steps', type=int, default=75, help='Denoising Sampling steps.')
 parser.add_argument('--seed', type=int, default=42, help='Random seed for sampling.')

@@ -19,6 +19,7 @@ async def generate(
     print(f"prompt: {prompt}")
     timeout, content = await _generate(prompt)
     # buffer = base64.b64encode(buffer.getbuffer()).decode("utf-8")
+    print(timeout, content)
     return {
         "timeout": timeout,
         "content": content
@@ -30,7 +31,7 @@ async def _generate(prompt: str):
     timeout = random.randint(5, 15)
     print(timeout)
     time.sleep(timeout)
-    bt.logging.info(f"The generation of a 3D model from text took {time.time() - start} seconds.")
+    print(f"The generation of a 3D model from text took {time.time() - start} seconds.")
     return timeout, f"successfully generated: {prompt}"
 
 if __name__ == "__main__":

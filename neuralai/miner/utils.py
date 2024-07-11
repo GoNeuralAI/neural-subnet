@@ -7,16 +7,16 @@ from aiohttp import ClientTimeout
 def set_status(self, status: str="idle"):
     self.miner_status = status
 
-async def generate(self, synapse: bt.Synapse):
-    url = urllib.parse.urljoin(self.config.generation.endpoint, "/generate/")
+async def generate(self, synapse: bt.Synapse) -> bt.Synapse:
+    url = urllib.parse.urljoin(self.config.generation.endpoint, "/generate_from_text/")
     timeout = synapse.timeout
     # bt.logging.debug(f"timeout type: {type(timeout)}")
     prompt = synapse.prompt_text
     
     result = await _generate_from_text(gen_url=url, timeout=timeout, prompt=prompt)
     bt.logging.debug(f"generation result: {result}")
-    synapse.out_obj = result.content
-    synapse.timeout = result.timeout
+    
+    
     return synapse
 
 async def _generate_from_text(gen_url: str, timeout: int, prompt: str):
