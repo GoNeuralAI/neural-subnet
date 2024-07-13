@@ -12,7 +12,7 @@ import random
 
 app = FastAPI()
 
-@app.post("/generate/")
+@app.post("/generate_from_text/")
 async def generate(
     prompt: str = Body()
 ):
@@ -20,10 +20,10 @@ async def generate(
     timeout, content = await _generate(prompt)
     # buffer = base64.b64encode(buffer.getbuffer()).decode("utf-8")
     print(timeout, content)
-    return {
+    return Response(content={
         "timeout": timeout,
         "content": content
-    }
+    })
 
 #3D Generation
 async def _generate(prompt: str):

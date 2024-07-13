@@ -18,6 +18,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 import time
+import asyncio
 import typing
 from typing import Tuple
 import bittensor as bt

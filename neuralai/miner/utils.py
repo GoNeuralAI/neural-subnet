@@ -16,7 +16,6 @@ async def generate(self, synapse: bt.Synapse) -> bt.Synapse:
     result = await _generate_from_text(gen_url=url, timeout=timeout, prompt=prompt)
     bt.logging.debug(f"generation result: {result}")
     
-    
     return synapse
 
 async def _generate_from_text(gen_url: str, timeout: int, prompt: str):
@@ -28,7 +27,7 @@ async def _generate_from_text(gen_url: str, timeout: int, prompt: str):
             async with session.post(gen_url, data={"prompt": prompt}) as response:
                 if response.status == 200:
                     bt.logging.info("Generated successfully")
-                    result = response
+                    result = await response.text()
                     return result
                 else:
                     bt.logging.error(f"Generation failed. Please try again.: {response.status}")
