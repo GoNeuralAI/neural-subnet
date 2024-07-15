@@ -3,7 +3,10 @@ import argparse
 import numpy as np
 import torch
 import rembg
+import time
+import random
 import uvicorn
+from io import BytesIO
 from PIL import Image
 from torchvision.transforms import v2
 from pytorch_lightning import seed_everything
@@ -14,7 +17,8 @@ from huggingface_hub import hf_hub_download
 from diffusers import DiffusionPipeline, EulerAncestralDiscreteScheduler
 
 from src.utils.train_util import instantiate_from_config
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Body
+from fastapi.responses import StreamingResponse
 from src.utils.camera_util import (
     FOV_to_intrinsics, 
     get_zero123plus_input_cameras,
@@ -120,17 +124,29 @@ mesh_model = mesh_model.eval()
 
 ### text-to-mesh generation endpoint
 @app.post("/generate_from_text/")
-async def generate_image(prompt: str):
-    # generate image with text-to-image model
-    main_image = await _generate_image(prompt)
+async def generate_image(prompt: str = Body()):
     
-    # generate preview image from the main image
-    prev_images = await _generate_preview(main_image)
+    print(prompt)
+    # generate image with text-to-image model
+    # main_image = await _generate_image(prompt)
+    
+    # # generate preview image from the main image
+    # prev_images = await _generate_preview(main_image)
 
-    # generate mesh object from preview images
-    mesh_obj = await _generate_mesh(prev_images)
+    # # generate mesh object from preview images
+    # mesh_obj = await _generate_mesh(prev_images)
 
-    return mesh_obj
+    # return mesh_obj
+    timeout = random.randint(5, 10)
+    print(timeout)
+    time.sleep(timeout)
+    
+    mesh_path_idx = os.path.join(mesh_path, f'output.obj')
+    
+    with open(mesh_path_idx, "r") as f:
+        obj_data = f.read()
+    
+    return StreamingResponse(BytesIO(obj_data.encode()), media_type="application/octet-stream") 
 
 
 ### image-to-mesh generation endpoint
@@ -141,7 +157,7 @@ async def generate_preview(input_image):
 
     # generate mesh object from preview images
     mesh_obj = _generate_mesh(prev_images)
-
+        
     return mesh_obj
 
 # Generate image from prompt using playground v2.5 model
@@ -211,33 +227,33 @@ async def _generate_mesh(input_images):
             save_obj(vertices, faces, vertex_colors, mesh_path_idx)
         print(f"Mesh saved to {mesh_path_idx}")
 
-        # Generate video
-        if args.save_video:
-            video_path_idx = os.path.join(video_path, f'output.mp4')
-            render_size = infer_config.render_resolution
-            render_cameras = get_render_cameras(
-                batch_size=1, 
-                M=120, 
-                radius=args.distance, 
-                elevation=20.0,
-                is_flexicubes=IS_FLEXICUBES,
-            ).to(device)
+        # # Generate video
+        # if args.save_video:
+        #     video_path_idx = os.path.join(video_path, f'output.mp4')
+        #     render_size = infer_config.render_resolution
+        #     render_cameras = get_render_cameras(
+        #         batch_size=1, 
+        #         M=120, 
+        #         radius=args.distance, 
+        #         elevation=20.0,
+        #         is_flexicubes=IS_FLEXICUBES,
+        #     ).to(device)
             
-            frames = render_frames(
-                mesh_model, 
-                planes, 
-                render_cameras=render_cameras, 
-                render_size=render_size, 
-                chunk_size=chunk_size, 
-                is_flexicubes=IS_FLEXICUBES,
-            )
+        #     frames = render_frames(
+        #         mesh_model, 
+        #         planes, 
+        #         render_cameras=render_cameras, 
+        #         render_size=render_size, 
+        #         chunk_size=chunk_size, 
+        #         is_flexicubes=IS_FLEXICUBES,
+        #     )
 
-            save_video(
-                frames,
-                video_path_idx,
-                fps=30,
-            )
-            print(f"Video saved to {video_path_idx}")
+        #     save_video(
+        #         frames,
+        #         video_path_idx,
+        #         fps=30,
+        #     )
+        #     print(f"Video saved to {video_path_idx}")
 
     return
 
