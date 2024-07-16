@@ -128,7 +128,7 @@ class BaseMinerNeuron(BaseNeuron):
 
                 # Sync metagraph and potentially set weights.
                 self.sync()
-                print("Miner sync error. Pausing for 10 seconds to reconnect.")
+                # print("Miner sync error. Pausing for 10 seconds to reconnect.")
                 time.sleep(10)
                 self.step += 1
 

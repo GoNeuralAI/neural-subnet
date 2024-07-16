@@ -81,6 +81,7 @@ def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             axons=[self.metagraph.axons[uid] for uid in forward_uids],
             # Construct a dummy query. This simply contains a single integer.
             synapse=nas,
+            timeout=self.config.neuron.timeout,
             # All responses have the deserialize function called on them before returning.
             # You are encouraged to define your own deserialization function.
             deserialize=False,

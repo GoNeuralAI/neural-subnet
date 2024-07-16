@@ -64,8 +64,12 @@ class Miner(BaseMinerNeuron):
         # TODO(developer): Replace with actual implementation logic.
         # synapse.out_obj = synapse.in_na 
         
-        bt.logging.info("3D Generation Started. It would take for a while")
+        bt.logging.info(f"====== 3D Generation Started: {synapse.prompt_text} ======")
+        
+        # asyncio.create_task(generate())
         synapse = await generate(self, synapse)
+        
+        bt.logging.info(f"====== 3D Generation ended: {synapse.prompt_text} ======")
         return synapse
     
     async def forward_image(
