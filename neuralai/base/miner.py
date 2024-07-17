@@ -128,7 +128,7 @@ class BaseMinerNeuron(BaseNeuron):
 
                 # Sync metagraph and potentially set weights.
                 self.sync()
-                print("Miner sync error. Pausing for 10 seconds to reconnect.")
+                # print("Miner sync error. Pausing for 10 seconds to reconnect.")
                 time.sleep(10)
                 self.step += 1
 
@@ -192,8 +192,8 @@ class BaseMinerNeuron(BaseNeuron):
 
     def resync_metagraph(self):
         """Resyncs the metagraph and updates the hotkeys and moving averages based on the new metagraph."""
-        bt.logging.info("resync_metagraph()")
+        # bt.logging.info("resync_metagraph()")
 
         # Sync the metagraph.
-        self.metagraph.sync(subtensor=self.subtensor)
-        bt.logging.debug("metagraph", self.metagraph.last_update[self.uid])
+        # self.metagraph.sync(subtensor=self.subtensor)
+        # bt.logging.debug("metagraph", self.metagraph.last_update[self.uid])

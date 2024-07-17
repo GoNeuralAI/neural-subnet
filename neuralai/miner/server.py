@@ -12,13 +12,14 @@ import random
 
 app = FastAPI()
 
-@app.post("/generate/")
+@app.post("/generate_from_text/")
 async def generate(
     prompt: str = Body()
 ):
     print(f"prompt: {prompt}")
     timeout, content = await _generate(prompt)
     # buffer = base64.b64encode(buffer.getbuffer()).decode("utf-8")
+    print(timeout, content)
     return {
         "timeout": timeout,
         "content": content
@@ -28,9 +29,10 @@ async def generate(
 async def _generate(prompt: str):
     start = time.time() #start time
     timeout = random.randint(5, 15)
+    # timeout = int(20)
     print(timeout)
     time.sleep(timeout)
-    bt.logging.info(f"The generation of a 3D model from text took {time.time() - start} seconds.")
+    print(f"The generation of a 3D model from text took {time.time() - start} seconds.")
     return timeout, f"successfully generated: {prompt}"
 
 if __name__ == "__main__":

@@ -23,3 +23,6 @@ class MinerManager:
         }
         availables = [uid for uid, status in responses.items() if status == 'idle']
         return availables
+    
+    def set_initial_rewards():
+        bt.logging.debug("Set Rewards")
