@@ -45,6 +45,9 @@ def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     bt.logging.info("Checking available miners...")
     avail_uids = get_forward_uids(self, count=self.config.neuron.challenge_count)
     
+    if not avail_uids:
+        return
+    
     bt.logging.info(f"Selected miners are: {avail_uids}")
     
     forward_uids = self.miner_manager.get_miner_status(uids=avail_uids)
@@ -55,11 +58,6 @@ def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
         bt.logging.info(f"Available miners are: {forward_uids}")
     
     # avail_uids = self.miner_manager.update_miner_status()
-    
-    # if not avail_uids:
-    #     return
-    
-    # bt.logging.info(f"Available miners are: {avail_uids}")
     
     # miner_uids = get_selected_uids(self, avails=avail_uids, count=self.config.neuron.challenge_count)
 
@@ -90,11 +88,11 @@ def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
         bt.logging.info(f"Received responses from miners: {responses}")
         
         # Log the results for monitoring purposes.
-        # rewards = get_rewards(self, query=self.step, responses=responses)
+        rewards = get_rewards(self, responses=responses, all_uids=avail_uids, for_uids=forward_uids)
 
-        bt.logging.info(f"Scored responses:")
+        bt.logging.info(f"Updated scores: {rewards}")
         # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
-        # self.update_scores(rewards, miner_uids)
+        # self.update_scores(rewards, avail_uids)
     else:
         bt.logging.error(f"No prompt is ready yet")
     # TODO(developer): Define how the validator scores responses.

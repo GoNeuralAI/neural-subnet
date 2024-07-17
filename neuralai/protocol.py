@@ -43,7 +43,7 @@ class NATextSynapse(bt.Synapse):
     # Required request input, filled by sending dendrite caller.
     prompt_text: str = ""
     # Optional request output, filled by receiving axon.
-    out_obj: str = "Hello World"
+    out_obj: str = "obj"
     
     timeout: int = 100
     
