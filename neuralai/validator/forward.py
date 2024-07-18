@@ -37,16 +37,13 @@ def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
         - Saving the state
     - Normalize weights based on incentive_distribution
     - SET WEIGHTS!
-    - Sleep for 1000 seconds if needed
+    - Sleep for 600 seconds if needed
     """
     # TODO(developer): Define how the validator selects a miner to query, how often, etc.
     # get_random_uids is an example method, but you can replace it with your own.
     
     bt.logging.info("Checking available miners...")
     avail_uids = get_forward_uids(self, count=self.config.neuron.challenge_count)
-    
-    if not avail_uids:
-        return
     
     bt.logging.info(f"Selected miners are: {avail_uids}")
     
@@ -86,6 +83,9 @@ def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
         )
     
         bt.logging.info(f"Received responses from miners: {responses}")
+        
+        # generation time will be implemented in step 2
+        # res_time = [response.dendrite.process_time for response in responses]
         
         # Log the results for monitoring purposes.
         rewards = get_rewards(self, responses=responses, all_uids=avail_uids, for_uids=forward_uids)

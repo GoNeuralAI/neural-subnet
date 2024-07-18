@@ -1,22 +1,3 @@
-# The MIT License (MIT)
-# Copyright © 2023 Yuma Rao
-# TODO(developer): Set your name
-# Copyright © 2023 <your name>
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
-# documentation files (the “Software”), to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
-# and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in all copies or substantial portions of
-# the Software.
-
-# THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-# THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
-
 import time
 import asyncio
 import typing
@@ -42,34 +23,31 @@ class Miner(BaseMinerNeuron):
 
         # TODO(developer): Anything specific to your use case you can do here
 
+        self.generation_requests = 0
         set_status(self, self.config.miner.status)
         bt.logging.info(f"Current Miner Status: {self.miner_status}")
     #
-    async def forward(
+    async def forward_text(
         self, synapse: NATextSynapse
     ) -> NATextSynapse:
-        """
-        Processes the incoming 'NATextSynapse' synapse by performing a predefined operation on the input data.
-        This method should be replaced with actual logic relevant to the miner's purpose.
-
-        Args:
-            synapse (neuralai.protocol.NATextSynapse): The synapse object containing the 'NATextSynapse_input' data.
-
-        Returns:
-            neuralai.protocol.NATextSynapse: The synapse object with the 'NATextSynapse_output' field set to twice the 'NATextSynapse_input' value.
-
-        The 'forward' function is a placeholder and should be overridden with logic that is appropriate for
-        the miner's intended operation. This method demonstrates a basic transformation of input data.
-        """
         # TODO(developer): Replace with actual implementation logic.
-        # synapse.out_obj = synapse.in_na 
+        self.generation_requests += 1
         
-        bt.logging.info(f"====== 3D Generation Started: {synapse.prompt_text} ======")
-        
-        # asyncio.create_task(generate())
-        synapse = await generate(self, synapse)
-        
-        bt.logging.info(f"====== 3D Generation ended: {synapse.prompt_text} ======")
+        if self.miner_status is "reservation":
+            bt.logging.debug(f"====== 3D Generation Started: {synapse.prompt_text} ======")
+            
+            set_status(self, "generation")
+            synapse = await generate(self, synapse)
+            
+            self.generation_requests -= 1
+            if self.generation_requests is 0:
+                set_status(self)
+                
+            bt.logging.debug(f"====== 3D Generation Ended: {synapse.prompt_text} ======")
+            
+        else:
+            bt.logging.warning("Couldn't perform the Generation right now.")
+            
         return synapse
     
     async def forward_image(
@@ -92,22 +70,19 @@ class Miner(BaseMinerNeuron):
         # synapse.out_obj = synapse.in_na 
         return synapse
 
-    async def blacklist(
-        self, synapse: NATextSynapse
-    ) -> Tuple[bool, str]:
+    async def blacklist(self, synapse: NATextSynapse) -> Tuple[bool, str]:
 
         if synapse.dendrite is None or synapse.dendrite.hotkey is None:
             bt.logging.warning("Received a request without a dendrite or hotkey.")
             return True, "Missing dendrite or hotkey"
 
-        # TODO(developer): Define how miners should blacklist requests.
         uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
         if (
             not self.config.blacklist.allow_non_registered
             and synapse.dendrite.hotkey not in self.metagraph.hotkeys
         ):
             # Ignore requests from un-registered entities.
-            bt.logging.trace(
+            bt.logging.warning(
                 f"Blacklisting un-registered hotkey {synapse.dendrite.hotkey}"
             )
             return True, "Unrecognized hotkey"
@@ -125,13 +100,17 @@ class Miner(BaseMinerNeuron):
         )
         return False, "Hotkey recognized!"
     
-    async def blacklist_image(
-        self, synapse: NAImageSynapse
-    ) -> Tuple[bool, str]:
-
-        return False, "Hotkey recognized!"
+    async def blacklist_text(self, synapse: NATextSynapse) -> Tuple[bool, str]:
+        return await self.blacklist(synapse)
     
+    async def blacklist_image(self, synapse: NAImageSynapse) -> Tuple[bool, str]:
+        return await self.blacklist(synapse)
+
     async def forward_status(self, synapse: NAStatus) -> NAStatus:
+        set_status(self, "reservation")
+        if self.generation_requests >= self.config.miner.concurrent_limit:
+            set_status(self, "generation")
+            
         synapse.status = self.miner_status
         return synapse
     

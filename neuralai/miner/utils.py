@@ -16,6 +16,7 @@ async def generate(self, synapse: bt.Synapse) -> bt.Synapse:
     bt.logging.debug(f"generation result: {type(result)}")
     
     synapse.out_obj = result
+    
     return synapse
 
 async def _generate_from_text(gen_url: str, timeout: int, prompt: str):
