@@ -161,7 +161,7 @@ def add_miner_args(cls, parser):
         "--miner.concurrent_limit",
         type=int,
         default=1,
-        help="Limit that miner is able to generate concurrently"
+        help="The limit that miner is able to generate concurrently"
     )
     
     parser.add_argument(
@@ -192,7 +192,7 @@ def add_validator_args(cls, parser):
         "--neuron.timeout",
         type=float,
         help="The timeout for each forward call in seconds.",
-        default=600,
+        default=300,
     )
 
     parser.add_argument(

@@ -161,11 +161,11 @@ class BaseValidatorNeuron(BaseNeuron):
                 # Sync metagraph and potentially set weights.
                 
                 import time
-                time.sleep(1)
+                time.sleep(10)
                 
                 if self.step % 5 == 0:
                     self.sync()
-                    bt.logging.info(f"megagraph sync{self.step}")
+                    bt.logging.info(f"megagraph sync: {self.step}")
 
                 self.step += 1
 
