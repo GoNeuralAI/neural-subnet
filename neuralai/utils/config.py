@@ -158,6 +158,13 @@ def add_miner_args(cls, parser):
     )
     
     parser.add_argument(
+        "--miner.concurrent_limit",
+        type=int,
+        default=1,
+        help="Limit that miner is able to generate concurrently"
+    )
+    
+    parser.add_argument(
         "--miner.status",
         type=str,
         default="idle", #idle, working, waiting
