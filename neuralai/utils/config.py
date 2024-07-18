@@ -177,6 +177,13 @@ def add_miner_args(cls, parser):
         help="Miner 3D Generation Endpoint",
         default="http://127.0.0.1:8093",
     )
+    
+    parser.add_argument(
+        "--miner.gen_interval",
+        type=int,
+        help="The interval to limit the number of requests",
+        default=30,
+    )
 
 def add_validator_args(cls, parser):
     """Add validator specific arguments to the parser."""
@@ -192,7 +199,7 @@ def add_validator_args(cls, parser):
         "--neuron.timeout",
         type=float,
         help="The timeout for each forward call in seconds.",
-        default=300,
+        default=30,
     )
 
     parser.add_argument(
