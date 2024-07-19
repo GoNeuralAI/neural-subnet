@@ -33,10 +33,11 @@ class Miner(BaseMinerNeuron):
             bt.logging.debug(f"====== 3D Generation Started: {synapse.prompt_text} ======")
             
             set_status(self, "generation")
+            #send gpu id as a parameter for multi gpu
             synapse = await generate(self, synapse)
             
             self.generation_requests -= 1
-            if self.generation_requests is 0:
+            if self.generation_requests < self.config.miner.concurrent_limit:
                 set_status(self)
                 
             bt.logging.debug(f"====== 3D Generation Ended ======")
@@ -50,6 +51,8 @@ class Miner(BaseMinerNeuron):
         self, synapse: NAImageSynapse
     ) -> NAImageSynapse:
         """
+        For the synapse from the end users to validators
+        
         Processes the incoming 'NAImageSynapse' synapse by performing a predefined operation on the input data.
         This method should be replaced with actual logic relevant to the miner's purpose.
 
@@ -67,7 +70,6 @@ class Miner(BaseMinerNeuron):
         return synapse
 
     async def blacklist(self, synapse: NATextSynapse) -> Tuple[bool, str]:
-        bt.logging.warning("OKY")
         try:
             if synapse.dendrite is None or synapse.dendrite.hotkey is None:
                 bt.logging.warning("Received a request without a dendrite or hotkey.")
@@ -92,7 +94,6 @@ class Miner(BaseMinerNeuron):
                     )
                     return True, "Non-validator hotkey"
 
-            bt.logging.debug(type(uid))
             if check_validator(self, uid=uid, interval=int(self.config.miner.gen_interval)):
                 bt.logging.warning(
                     f"Too many requests from {synapse.dendrite.hotkey}"

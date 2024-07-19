@@ -1,7 +1,6 @@
 import bittensor as bt
 import urllib.parse
 import aiohttp
-from aiohttp import ClientTimeout
 import time
 
 def set_status(self, status: str="idle"):
@@ -14,13 +13,11 @@ def check_validator(self, uid: int, interval: int = 300):
     # bt.logging.debug(f"{self.validators}")
     if uid not in self.validators:
         bt.logging.debug(f"#######################222#####################")
-        
         self.validators[uid] = {
             "start": cur_time,
             "requests": 1,
         }
         bt.logging.debug(f"{self.validators}")
-        
         bt.logging.debug(f"#######################222#####################")
         
     elif cur_time - self.validators[uid]["start"] > interval:
@@ -31,12 +28,10 @@ def check_validator(self, uid: int, interval: int = 300):
             "requests": 1,
         }
         bt.logging.debug(f"{self.validators}")
-
         bt.logging.debug(f"#######################333#####################")
         
     else:
         bt.logging.debug(f"#######################444#####################")
-        
         self.validators[uid]["requests"] += 1
         bt.logging.debug(f"{self.validators}")
         
@@ -61,12 +56,12 @@ async def generate(self, synapse: bt.Synapse) -> bt.Synapse:
     return synapse
 
 async def _generate_from_text(gen_url: str, timeout: int, prompt: str):
-    client_timeout = ClientTimeout(total=float(timeout))
     async with aiohttp.ClientSession() as session:
         try:
             bt.logging.debug(f"=================================================")
+            client_timeout = aiohttp.ClientTimeout(total=float(timeout))
             
-            async with session.post(gen_url, data={"prompt": prompt}) as response:
+            async with session.post(gen_url, timeout=client_timeout, data={"prompt": prompt}) as response:
                 if response.status == 200:
                     result = await response.text()
                     bt.logging.info(f"Generated successfully: Size = {len(result)}")

@@ -196,7 +196,7 @@ def add_validator_args(cls, parser):
     )
 
     parser.add_argument(
-        "--neuron.timeout",
+        "--neuron.task_period",
         type=float,
         help="The timeout for each forward call in seconds.",
         default=30,
@@ -272,7 +272,7 @@ def add_validator_args(cls, parser):
         "--generation.timeout",
         type=int,
         help="Miner 3D Generation Time",
-        default=1000
+        default=30
     )
 
 def config(cls):

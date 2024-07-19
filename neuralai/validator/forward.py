@@ -1,23 +1,6 @@
-# The MIT License (MIT)
-# Copyright © 2023 Yuma Rao
-# TODO(developer): Set your name
-# Copyright © 2023 <your name>
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
-# documentation files (the “Software”), to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
-# and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in all copies or substantial portions of
-# the Software.
-
-# THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-# THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
-
 import bittensor as bt
+
+import time
 
 from neuralai.protocol import NATextSynapse
 from neuralai.validator.reward import get_rewards
@@ -37,10 +20,10 @@ def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
         - Saving the state
     - Normalize weights based on incentive_distribution
     - SET WEIGHTS!
-    - Sleep for 600 seconds if needed
+    - Sleep for 300 seconds if needed
     """
-    # TODO(developer): Define how the validator selects a miner to query, how often, etc.
-    # get_random_uids is an example method, but you can replace it with your own.
+    start_time = time.time()
+    loop_time = self.config.neuron.task_period
     
     bt.logging.info("Checking available miners...")
     avail_uids = get_forward_uids(self, count=self.config.neuron.challenge_count)
@@ -79,7 +62,7 @@ def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             axons=[self.metagraph.axons[uid] for uid in forward_uids],
             # Construct a dummy query. This simply contains a single integer.
             synapse=nas,
-            timeout=self.config.neuron.timeout,
+            timeout=self.config.generation.timeout,
             # All responses have the deserialize function called on them before returning.
             # You are encouraged to define your own deserialization function.
             deserialize=False,
@@ -99,5 +82,9 @@ def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
         # self.update_scores(rewards, avail_uids)
     else:
         bt.logging.error(f"No prompt is ready yet")
-    # TODO(developer): Define how the validator scores responses.
     # Adjust the scores based on responses from miners.
+    
+    taken_time = time.time() - start_time
+    if taken_time < loop_time:
+        bt.logging.info(f"== Taken time: {taken_time} | Sleeping for {loop_time - taken_time} seconds ==")
+        time.sleep(loop_time - taken_time)
