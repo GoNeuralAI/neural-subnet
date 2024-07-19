@@ -2,18 +2,59 @@ import bittensor as bt
 import urllib.parse
 import aiohttp
 from aiohttp import ClientTimeout
+import time
 
 def set_status(self, status: str="idle"):
     self.miner_status = status
+    
+def check_validator(self, uid: int, interval: int = 300):
+    cur_time = time.time()
+    bt.logging.debug(f"#######################111#####################")
+    bt.logging.debug(f"{uid}")
+    # bt.logging.debug(f"{self.validators}")
+    if uid not in self.validators:
+        bt.logging.debug(f"#######################222#####################")
+        
+        self.validators[uid] = {
+            "start": cur_time,
+            "requests": 1,
+        }
+        bt.logging.debug(f"{self.validators}")
+        
+        bt.logging.debug(f"#######################222#####################")
+        
+    elif cur_time - self.validators[uid]["start"] > interval:
+        bt.logging.debug(f"#######################333#####################")
+        
+        self.validators[uid] = {
+            "start": cur_time,
+            "requests": 1,
+        }
+        bt.logging.debug(f"{self.validators}")
+
+        bt.logging.debug(f"#######################333#####################")
+        
+    else:
+        bt.logging.debug(f"#######################444#####################")
+        
+        self.validators[uid]["requests"] += 1
+        bt.logging.debug(f"{self.validators}")
+        
+        bt.logging.debug(f"#######################444#####################")
+        
+        return True
+    return False
 
 async def generate(self, synapse: bt.Synapse) -> bt.Synapse:
     url = urllib.parse.urljoin(self.config.generation.endpoint, "/generate_from_text/")
     timeout = synapse.timeout
     # bt.logging.debug(f"timeout type: {type(timeout)}")
     prompt = synapse.prompt_text
+    synapse_type = type(synapse).__name__
     
-    result = await _generate_from_text(gen_url=url, timeout=timeout, prompt=prompt)
-    bt.logging.debug(f"generation result: {type(result)}")
+    if synapse_type is "NATextSynapse":
+        result = await _generate_from_text(gen_url=url, timeout=timeout, prompt=prompt)
+        bt.logging.debug(f"generation result: {type(result)}")
     
     synapse.out_obj = result
     

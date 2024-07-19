@@ -137,7 +137,7 @@ async def generate_image(prompt: str = Body()):
     # mesh_obj = await _generate_mesh(prev_images)
 
     # return mesh_obj
-    timeout = random.randint(15, 20)
+    timeout = random.randint(5, 10)
     print(timeout)
     time.sleep(timeout)
     

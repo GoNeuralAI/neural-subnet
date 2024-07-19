@@ -68,9 +68,12 @@ def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     else:
         task = self.task_manager.prepare_task()
         nas = NATextSynapse(prompt_text=task, timeout=self.config.generation.timeout)
-        bt.logging.info(f"Sending task: {task}")
+        
     if task:
         # The dendrite client queries the network.
+        if forward_uids:
+            bt.logging.info(f"Sending tasks to miners: {task}")
+        
         responses = self.dendrite.query(
             # Send the query to selected miner axons in the network.
             axons=[self.metagraph.axons[uid] for uid in forward_uids],
@@ -82,7 +85,8 @@ def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             deserialize=False,
         )
     
-        bt.logging.info(f"Received responses from miners: {responses}")
+        if forward_uids:
+            bt.logging.info(f"Received responses from miners: {responses}")
         
         # generation time will be implemented in step 2
         # res_time = [response.dendrite.process_time for response in responses]

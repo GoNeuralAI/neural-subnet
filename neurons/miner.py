@@ -7,33 +7,29 @@ import bittensor as bt
 # import base miner class which takes care of most of the boilerplate
 from neuralai.base.miner import BaseMinerNeuron
 from neuralai.protocol import NATextSynapse, NAImageSynapse, NAStatus
-from neuralai.miner.utils import set_status, generate
+from neuralai.miner.utils import set_status, generate, check_validator
 
 class Miner(BaseMinerNeuron):
-    """
-    Your miner neuron class. You should use this class to define your miner's behavior. In particular, you should replace the forward function with your own logic. You may also want to override the blacklist and priority functions according to your needs.
-
-    This class inherits from the BaseMinerNeuron class, which in turn inherits from BaseNeuron. The BaseNeuron class takes care of routine tasks such as setting up wallet, subtensor, metagraph, logging directory, parsing config, etc. You can override any of the methods in BaseNeuron if you need to customize the behavior.
-
-    This class provides reasonable default behavior for a miner such as blacklisting unrecognized hotkeys, prioritizing requests based on stake, and forwarding requests to the forward function. If you need to define custom
-    """
-
+    
     def __init__(self, config=None):
         super(Miner, self).__init__(config=config)
 
         # TODO(developer): Anything specific to your use case you can do here
 
+        self.validators = {}
         self.generation_requests = 0
+        
         set_status(self, self.config.miner.status)
-        bt.logging.info(f"Current Miner Status: {self.miner_status}")
-    #
+
     async def forward_text(
         self, synapse: NATextSynapse
     ) -> NATextSynapse:
         # TODO(developer): Replace with actual implementation logic.
+        uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
+        # self.validators[uid]['requests'] = self.validators[uid].get('requests', 0)
         self.generation_requests += 1
         
-        if self.miner_status is "reservation":
+        if self.miner_status is "idle":
             bt.logging.debug(f"====== 3D Generation Started: {synapse.prompt_text} ======")
             
             set_status(self, "generation")
@@ -43,7 +39,7 @@ class Miner(BaseMinerNeuron):
             if self.generation_requests is 0:
                 set_status(self)
                 
-            bt.logging.debug(f"====== 3D Generation Ended: {synapse.prompt_text} ======")
+            bt.logging.debug(f"====== 3D Generation Ended ======")
             
         else:
             bt.logging.warning("Couldn't perform the Generation right now.")
@@ -71,52 +67,64 @@ class Miner(BaseMinerNeuron):
         return synapse
 
     async def blacklist(self, synapse: NATextSynapse) -> Tuple[bool, str]:
+        bt.logging.warning("OKY")
+        try:
+            if synapse.dendrite is None or synapse.dendrite.hotkey is None:
+                bt.logging.warning("Received a request without a dendrite or hotkey.")
+                return True, "Missing dendrite or hotkey"
 
-        if synapse.dendrite is None or synapse.dendrite.hotkey is None:
-            bt.logging.warning("Received a request without a dendrite or hotkey.")
-            return True, "Missing dendrite or hotkey"
-
-        uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
-        if (
-            not self.config.blacklist.allow_non_registered
-            and synapse.dendrite.hotkey not in self.metagraph.hotkeys
-        ):
-            # Ignore requests from un-registered entities.
-            bt.logging.warning(
-                f"Blacklisting un-registered hotkey {synapse.dendrite.hotkey}"
-            )
-            return True, "Unrecognized hotkey"
-
-        if self.config.blacklist.force_validator_permit:
-            # If the config is set to force validator permit, then we should only allow requests from validators.
-            if not self.metagraph.validator_permit[uid]:
+            uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
+            if (
+                not self.config.blacklist.allow_non_registered
+                and synapse.dendrite.hotkey not in self.metagraph.hotkeys
+            ):
+                # Ignore requests from un-registered entities.
                 bt.logging.warning(
-                    f"Blacklisting a request from non-validator hotkey {synapse.dendrite.hotkey}"
+                    f"Blacklisting un-registered hotkey {synapse.dendrite.hotkey}"
+                )
+                return True, "Unrecognized hotkey"
+
+            if self.config.blacklist.force_validator_permit:
+                # If the config is set to force validator permit, then we should only allow requests from validators.
+                if not self.metagraph.validator_permit[uid]:
+                    bt.logging.warning(
+                        f"Blacklisting a request from non-validator hotkey {synapse.dendrite.hotkey}"
+                    )
+                    return True, "Non-validator hotkey"
+
+            bt.logging.debug(type(uid))
+            if check_validator(self, uid=uid, interval=int(self.config.miner.gen_interval)):
+                bt.logging.warning(
+                    f"Too many requests from {synapse.dendrite.hotkey}"
                 )
                 return True, "Non-validator hotkey"
 
-        bt.logging.trace(
-            f"Not Blacklisting recognized hotkey {synapse.dendrite.hotkey}"
-        )
-        return False, "Hotkey recognized!"
+            bt.logging.trace(
+                f"Not Blacklisting recognized hotkey {synapse.dendrite.hotkey}"
+            )
+            return False, "All passed!"
+        except Exception as e:
+            bt.logging.error(f"Error in blacklist: {e}")
+            return False, "Hotkey recognized!"
     
     async def blacklist_text(self, synapse: NATextSynapse) -> Tuple[bool, str]:
+        # return True, "Hotkey recognized!"
         return await self.blacklist(synapse)
     
     async def blacklist_image(self, synapse: NAImageSynapse) -> Tuple[bool, str]:
         return await self.blacklist(synapse)
 
     async def forward_status(self, synapse: NAStatus) -> NAStatus:
-        set_status(self, "reservation")
+        bt.logging.info(f"Current Miner Status: {self.miner_status}")
+        synapse.status = self.miner_status
         if self.generation_requests >= self.config.miner.concurrent_limit:
             set_status(self, "generation")
             
-        synapse.status = self.miner_status
         return synapse
     
-    async def blacklist_status(self, synpase: NAStatus) -> Tuple[bool, str]:
+    async def blacklist_status(self, synapse: NAStatus) -> Tuple[bool, str]:
         return False, "All passed!"
-
+    
     async def priority(self, synapse: NATextSynapse) -> float:
         """
         The priority function determines the order in which requests are handled. More valuable or higher-priority
@@ -158,4 +166,4 @@ if __name__ == "__main__":
     with Miner() as miner:
         while True:
             bt.logging.info(f"Miner running... {time.time()}")
-            time.sleep(20)
+            time.sleep(100)

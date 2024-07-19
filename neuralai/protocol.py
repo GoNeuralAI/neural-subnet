@@ -47,7 +47,7 @@ class NATextSynapse(bt.Synapse):
     
     timeout: int = 100
     
-    computed_body_hash: str = pydantic.Field("", title="Computed Body Hash", frozen=False)
+    computed_body_hash: str = ""
 
     def deserialize(self) -> str:
         """
@@ -62,7 +62,7 @@ class NAImageSynapse(bt.Synapse):
     # Required request input, filled by sending dendrite caller.
     prompt_image: str = ""
     # Optional request output, filled by receiving axon.
-    out_obj: str = "Hello World"
+    out_obj: str = "obj"
     
     timeout: int = 100
     
@@ -79,4 +79,13 @@ class NAImageSynapse(bt.Synapse):
 
 class NAStatus(bt.Synapse):
     status: str = ""
-    computed_body_hash: str = pydantic.Field("", title="Computed Body Hash", frozen=False)
+    computed_body_hash: str = ""
+    
+    def deserialize(self) -> str:
+        """
+        Deserialize the miner response.
+
+        Returns:
+        - List[Image.Image]: The deserialized response, which is a list of several images measured in different axis
+        """
+        return self.status

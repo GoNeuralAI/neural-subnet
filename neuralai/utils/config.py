@@ -161,7 +161,7 @@ def add_miner_args(cls, parser):
         "--miner.concurrent_limit",
         type=int,
         default=1,
-        help="Limit that miner is able to generate concurrently"
+        help="The limit that miner is able to generate concurrently"
     )
     
     parser.add_argument(
@@ -176,6 +176,13 @@ def add_miner_args(cls, parser):
         type=str,
         help="Miner 3D Generation Endpoint",
         default="http://127.0.0.1:8093",
+    )
+    
+    parser.add_argument(
+        "--miner.gen_interval",
+        type=int,
+        help="The interval to limit the number of requests",
+        default=30,
     )
 
 def add_validator_args(cls, parser):
@@ -192,7 +199,7 @@ def add_validator_args(cls, parser):
         "--neuron.timeout",
         type=float,
         help="The timeout for each forward call in seconds.",
-        default=600,
+        default=30,
     )
 
     parser.add_argument(
