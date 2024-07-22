@@ -60,7 +60,6 @@ class Validator(BaseValidatorNeuron):
         - Updating the scores
         """
         
-        # TODO(developer): Rewrite this function based on your protocol definition.
         return forward(self, synapse)
     
     async def forward_fn(self, synapse: NATextSynapse=None):
