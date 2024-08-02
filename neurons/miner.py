@@ -66,7 +66,6 @@ class Miner(BaseMinerNeuron):
         the miner's intended operation. This method demonstrates a basic transformation of input data.
         """
         # TODO(developer): Replace with actual implementation logic.
-        # synapse.out_obj = synapse.in_na 
         return synapse
 
     async def blacklist(self, synapse: NATextSynapse) -> Tuple[bool, str]:
@@ -109,7 +108,6 @@ class Miner(BaseMinerNeuron):
             return False, "Hotkey recognized!"
     
     async def blacklist_text(self, synapse: NATextSynapse) -> Tuple[bool, str]:
-        # return True, "Hotkey recognized!"
         return await self.blacklist(synapse)
     
     async def blacklist_image(self, synapse: NAImageSynapse) -> Tuple[bool, str]:

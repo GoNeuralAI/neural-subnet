@@ -128,18 +128,18 @@ async def generate_image(prompt: str = Body()):
     
     print(prompt)
     # generate image with text-to-image model
-    # main_image = await _generate_image(prompt)
+    main_image = await _generate_image(prompt)
     
-    # # generate preview image from the main image
-    # prev_images = await _generate_preview(main_image)
+    # generate preview image from the main image
+    prev_images = await _generate_preview(main_image)
 
-    # # generate mesh object from preview images
-    # mesh_obj = await _generate_mesh(prev_images)
+    # generate mesh object from preview images
+    mesh_obj = await _generate_mesh(prev_images)
 
     # return mesh_obj
-    timeout = random.randint(5, 10)
-    print(timeout)
-    time.sleep(timeout)
+    # timeout = random.randint(5, 10)
+    # print(timeout)
+    # time.sleep(timeout)
     
     mesh_path_idx = os.path.join(mesh_path, f'output.obj')
     
@@ -164,7 +164,7 @@ async def generate_preview(input_image):
 async def _generate_image(prompt: str):
     print('Generating main image')
     image = pg_pipeline(
-        prompt='Astronaut in a black sky, cold color palette, muted colors, detailed, 8k', 
+        prompt=prompt, 
         num_inference_steps=50, 
         guidance_scale=3
         ).images[0]
