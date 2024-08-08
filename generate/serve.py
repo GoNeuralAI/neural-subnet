@@ -5,6 +5,7 @@ import torch
 import rembg
 import time
 import random
+import zipfile
 import uvicorn
 from io import BytesIO
 from PIL import Image
@@ -124,7 +125,7 @@ mesh_model = mesh_model.eval()
 
 ### text-to-mesh generation endpoint
 @app.post("/generate_from_text/")
-async def generate_image(prompt: str = Body()):
+async def generate_mesh(prompt: str = Body()):
     
     print(prompt)
     # generate image with text-to-image model
@@ -136,17 +137,26 @@ async def generate_image(prompt: str = Body()):
     # generate mesh object from preview images
     mesh_obj = await _generate_mesh(prev_images)
 
-    # return mesh_obj
-    # timeout = random.randint(5, 10)
-    # print(timeout)
-    # time.sleep(timeout)
-    
+    prev_path_idx = os.path.join(image_path, f'preview.png')
     mesh_path_idx = os.path.join(mesh_path, f'output.obj')
+    mtl_path_idx = os.path.join(mesh_path, f'output.mtl')
+    texture_path_idx = os.path.join(mesh_path, f'output.png')
     
-    with open(mesh_path_idx, "r") as f:
-        obj_data = f.read()
+    print("loading...")
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+        zip_file.writestr('preview.png', open(prev_path_idx, 'rb').read())
+        zip_file.writestr('output.obj', open(mesh_path_idx, 'r').read())
+        zip_file.writestr('output.mtl', open(mtl_path_idx, 'r').read())
+        zip_file.writestr('output.png', open(texture_path_idx, 'rb').read())
     
-    return StreamingResponse(BytesIO(obj_data.encode()), media_type="application/octet-stream") 
+    zip_buffer.seek(0)  # Move to the beginning of the BytesIO buffer
+
+    print("Files prepared for download.")
+
+    return StreamingResponse(zip_buffer, media_type='application/zip', headers={"Content-Disposition": "attachment; filename=mesh_files.zip"})
+    
+    # return StreamingResponse(BytesIO(obj_data.encode()), media_type="application/octet-stream") 
 
 
 ### image-to-mesh generation endpoint
@@ -169,6 +179,8 @@ async def _generate_image(prompt: str):
         guidance_scale=3
         ).images[0]
     print('Main image generated')
+    
+    image.save(os.path.join(image_path, 'preview.png'))
     return image
 
 # Generate preview images with zero123plus model
@@ -181,6 +193,7 @@ async def _generate_preview(input_image):
     prev_images = np.asarray(prev_image, dtype=np.float32) / 255.0
     prev_images = torch.from_numpy(prev_images).permute(2, 0, 1).contiguous().float()     # (3, 960, 640)
     prev_images = rearrange(prev_images, 'c (n h) (m w) -> (n m) c h w', n=3, m=2)        # (6, 3, 320, 320)
+    # prev_image.save(os.path.join(image_path, 'preview.png'))
     print('Preview images generated')
 
     return prev_images

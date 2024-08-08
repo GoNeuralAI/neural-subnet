@@ -33,7 +33,7 @@ async def _generate(prompt: str):
     print(timeout)
     time.sleep(timeout)
     print(f"The generation of a 3D model from text took {time.time() - start} seconds.")
-    return timeout, f"successfully generated: {prompt}"
+    return timeout, f"successfully generated: {prompt}" 
 
 if __name__ == "__main__":
     uvicorn.run(app=app, host="0.0.0.0", port=8093)

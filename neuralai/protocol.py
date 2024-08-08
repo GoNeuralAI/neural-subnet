@@ -11,7 +11,13 @@ class NATextSynapse(bt.Synapse):
     # Required request input, filled by sending dendrite caller.
     prompt_text: str = ""
     # Optional request output, filled by receiving axon.
+    out_prev: str = "prev"
+    # output obj, supported format is .obj
     out_obj: str = "obj"
+    # output texture, supported format is .png
+    out_texture: str = "texture"
+    # output mtl file supported format is .mtl
+    out_mtl: str = "mtl"
     # Query response timeout
     timeout: int = 100
     

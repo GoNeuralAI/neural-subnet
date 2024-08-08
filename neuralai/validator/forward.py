@@ -83,8 +83,7 @@ def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     else:
         bt.logging.error(f"No prompt is ready yet")
     # Adjust the scores based on responses from miners.
-    
     taken_time = time.time() - start_time
-    if taken_time < loop_time:
+    if taken_time < loop_time and forward_uids:
         bt.logging.info(f"== Taken time: {taken_time} | Sleeping for {loop_time - taken_time} seconds ==")
         time.sleep(loop_time - taken_time)

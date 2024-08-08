@@ -2,42 +2,34 @@ import bittensor as bt
 import urllib.parse
 import aiohttp
 import time
+import zipfile
+import io
+import base64
 
 def set_status(self, status: str="idle"):
     self.miner_status = status
     
 def check_validator(self, uid: int, interval: int = 300):
     cur_time = time.time()
-    bt.logging.debug(f"#######################111#####################")
-    bt.logging.debug(f"{uid}")
-    # bt.logging.debug(f"{self.validators}")
+    bt.logging.debug(f"Checking validator for UID: {uid}")
+    
     if uid not in self.validators:
-        bt.logging.debug(f"#######################222#####################")
+        bt.logging.debug("Adding new validator.")
         self.validators[uid] = {
             "start": cur_time,
             "requests": 1,
         }
-        bt.logging.debug(f"{self.validators}")
-        bt.logging.debug(f"#######################222#####################")
-        
     elif cur_time - self.validators[uid]["start"] > interval:
-        bt.logging.debug(f"#######################333#####################")
-        
+        bt.logging.debug("Resetting validator due to interval.")
         self.validators[uid] = {
             "start": cur_time,
             "requests": 1,
         }
-        bt.logging.debug(f"{self.validators}")
-        bt.logging.debug(f"#######################333#####################")
-        
     else:
-        bt.logging.debug(f"#######################444#####################")
+        bt.logging.debug("Incrementing request count for existing validator.")
         self.validators[uid]["requests"] += 1
-        bt.logging.debug(f"{self.validators}")
-        
-        bt.logging.debug(f"#######################444#####################")
-        
         return True
+    
     return False
 
 async def generate(self, synapse: bt.Synapse) -> bt.Synapse:
@@ -47,11 +39,17 @@ async def generate(self, synapse: bt.Synapse) -> bt.Synapse:
     prompt = synapse.prompt_text
     synapse_type = type(synapse).__name__
     
-    if synapse_type is "NATextSynapse":
+    if synapse_type == "NATextSynapse":
         result = await _generate_from_text(gen_url=url, timeout=timeout, prompt=prompt)
-        bt.logging.debug(f"generation result: {type(result)}")
-    
-    synapse.out_obj = result
+        bt.logging.debug(f"Generation result type: {type(result)}")
+        
+        # Ensure the result is a dictionary and contains the expected keys
+        synapse.out_prev = result["prev"]
+        synapse.out_obj = result["obj"]
+        synapse.out_mtl = result["mtl"]
+        synapse.out_texture = result["texture"]
+        bt.logging.info("Valid result")
+        bt.logging.info(synapse.out_mtl)
     
     return synapse
 
@@ -63,9 +61,25 @@ async def _generate_from_text(gen_url: str, timeout: int, prompt: str):
             
             async with session.post(gen_url, timeout=client_timeout, data={"prompt": prompt}) as response:
                 if response.status == 200:
-                    result = await response.text()
-                    bt.logging.info(f"Generated successfully: Size = {len(result)}")
-                    return result
+                    zip_buffer = io.BytesIO(await response.read())
+                    with zipfile.ZipFile(zip_buffer, 'r') as zip_file:
+                        # Extract each file's data
+                        prev_data = zip_file.read('preview.png')
+                        obj_data = zip_file.read('output.obj').decode('utf-8')
+                        mtl_data = zip_file.read('output.mtl').decode('utf-8')
+                        texture_data = zip_file.read('output.png')  # This will be in bytes
+                    # bt.logging.info(f"Generated successfully: Size = {len(result)}")
+                    
+                        encoded_prev_data = base64.b64encode(prev_data).decode('utf-8')
+                        encoded_texture_data = base64.b64encode(texture_data).decode('utf-8')
+                    
+                    bt.logging.debug(f"The result {prev_data}")
+                    return {
+                        "prev": encoded_prev_data,
+                        "obj": obj_data,
+                        "mtl": mtl_data,
+                        "texture": encoded_texture_data
+                    }
                 else:
                     bt.logging.error(f"Generation failed. Please try again.: {response.status}")
         except aiohttp.ClientConnectorError:

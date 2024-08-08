@@ -29,7 +29,7 @@ class Miner(BaseMinerNeuron):
         # self.validators[uid]['requests'] = self.validators[uid].get('requests', 0)
         self.generation_requests += 1
         
-        if self.miner_status is "idle":
+        if self.miner_status == "idle":
             bt.logging.debug(f"====== 3D Generation Started: {synapse.prompt_text} ======")
             
             set_status(self, "generation")
