@@ -117,7 +117,6 @@ def render_mesh(obj_file: str, distance: float = 3.0, elevation: float = 20.0, a
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/render")
 async def render(
     prompt_image: str = Form(..., description="Prompt Image or Text (as a string)"),
     preview_image: UploadFile = File(..., description="Preview Image"),
@@ -154,11 +153,11 @@ def download_image(angle: int):
         raise HTTPException(status_code=404, detail="Image not found")
     return FileResponse(image_filename)
 
-@app.post("/evaluate")
-def evaluate():
+@app.post("/validate")
+def validate():
+    render()
     global render_params
     try:
-
         output_folder=OUTPUT_DIR
         prompt=render_params.get("prompt_image")
         preview_image_path = render_params.get("preview_image_path")

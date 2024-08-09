@@ -95,3 +95,5 @@ async def _generate_from_text(gen_url: str, timeout: int, prompt: str):
             bt.logging.error(f"An unexpected client error occurred: {e} ({gen_url})")
         except Exception as e:
             bt.logging.error(f"An unexpected error occurred: {e} ({gen_url})")
+    
+    return None
