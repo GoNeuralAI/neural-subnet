@@ -2,8 +2,8 @@ numpy==1.25.2
 opencv_python==4.10.0.82
 Pillow==10.4.0
 scikit-image
-torch==2.3.0
-torchvision==0.18.0
+torch
+torchvision
 fastapi
 uvicorn
 transformers

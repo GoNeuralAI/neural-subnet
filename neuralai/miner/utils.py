@@ -43,13 +43,18 @@ async def generate(self, synapse: bt.Synapse) -> bt.Synapse:
         result = await _generate_from_text(gen_url=url, timeout=timeout, prompt=prompt)
         bt.logging.debug(f"Generation result type: {type(result)}")
         
-        # Ensure the result is a dictionary and contains the expected keys
-        synapse.out_prev = result["prev"]
-        synapse.out_obj = result["obj"]
-        synapse.out_mtl = result["mtl"]
-        synapse.out_texture = result["texture"]
-        bt.logging.info("Valid result")
-        bt.logging.info(synapse.out_mtl)
+        # Check if the result is None
+        if result is None:
+            bt.logging.warning("Result is None, returning None")
+            
+        elif isinstance(result, dict) and all(key in result for key in ["prev", "obj", "mtl", "texture"]):
+            synapse.out_prev = result["prev"]
+            synapse.out_obj = result["obj"]
+            synapse.out_mtl = result["mtl"]
+            synapse.out_texture = result["texture"]
+            bt.logging.info("Valid result")
+        else:
+            bt.logging.warning("Result is not valid, returning None")
     
     return synapse
 

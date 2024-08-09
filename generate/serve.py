@@ -180,13 +180,14 @@ async def _generate_image(prompt: str):
         ).images[0]
     print('Main image generated')
     
-    image.save(os.path.join(image_path, 'preview.png'))
     return image
 
 # Generate preview images with zero123plus model
 async def _generate_preview(input_image):
     print('Generating preview images')
     input_image = remove_background(input_image, rembg_session)
+    input_image.save(os.path.join(image_path, 'preview.png'))
+    
     input_image = resize_foreground(input_image, 0.85)
 
     prev_image = zero_pipeline(input_image, num_inference_step=args.diffusion_steps).images[0]
