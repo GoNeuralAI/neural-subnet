@@ -119,18 +119,12 @@ def render_mesh(obj_file: str, distance: float = 3.0, elevation: float = 20.0, a
 
 async def render(
     prompt_image: str = Form(..., description="Prompt Image or Text (as a string)"),
-    preview_image: UploadFile = File(..., description="Preview Image"),
-    objective_file: UploadFile = File(..., description="Objective File"),
-    mtl_file: UploadFile = File(..., description=".MTL File"),
-    png_file: UploadFile = File(..., description="PNG File (Embedding)")
+    # preview_image: UploadFile = File(..., description="Preview Image"),
+    # objective_file: UploadFile = File(..., description="Objective File"),
+    # mtl_file: UploadFile = File(..., description=".MTL File"),
+    # png_file: UploadFile = File(..., description="PNG File (Embedding)")
 ):
     global render_params
-
-    # Save the uploaded files
-    for uploaded_file in [preview_image, objective_file, mtl_file, png_file]:
-        file_path = os.path.join(DATA_DIR, uploaded_file.filename)
-        with open(file_path, "wb") as buffer:
-            buffer.write(await uploaded_file.read())
 
     # Store parameters
     render_params = {

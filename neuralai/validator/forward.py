@@ -8,6 +8,7 @@ from neuralai.protocol import NATextSynapse
 from neuralai.validator.reward import get_rewards
 from neuralai.utils.uids import get_forward_uids
 from neuralai.validator.task_manager import TaskManager
+from nerualai.validator import utils
 
 def decode_base64(data, description):
     """Decode base64 data and handle potential errors."""
@@ -18,7 +19,7 @@ def decode_base64(data, description):
     except base64.binascii.Error as e:
         raise ValueError(f"Failed to decode {description} data: {e}")
 
-def save_synapse_files(synapse, index, base_dir='validation'):
+async def save_synapse_files(synapse, index, base_dir='validation'):
     # Create a unique subdirectory for each response under validation/results
     save_dir = os.path.join(base_dir, 'results', str(index))
     
@@ -55,7 +56,7 @@ def save_synapse_files(synapse, index, base_dir='validation'):
     with open(texture_path, 'wb') as f:
         f.write(texture_bytes)
 
-def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
+async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     """
     The forward function is called by the validator every time step.
 
@@ -115,11 +116,14 @@ def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             deserialize=False,
         )
         
-        for index, response in enumerate(responses, start=1):
+        for index, response in enumerate(responses):
             try:
-                save_synapse_files(response, forward_uids[index - 1])
+                await save_synapse_files(response, forward_uids[index])
             except ValueError as e:
-                print(f"Error saving files for response {forward_uids[index - 1]}: {e}")
+                print(f"Error saving files for response {forward_uids[index]}: {e}")
+                
+        for index, response in enumerate(responses):
+            await utils.validate(self.config.validation.endpoint, response.prompt_text, forward_uids[index])
         
         # if forward_uids:
         #     bt.logging.info(f"Received responses from miners: {responses}")

@@ -100,6 +100,13 @@ def add_args(cls, parser):
         help="Runs wandb in offline mode.",
         default=False,
     )
+    
+    parser.add_argument(
+        "--validation.endpoint",
+        type=str,
+        help="Validation endpoint url for scoring 3D assets. ",
+        default="http://127.0.0.1:8094",
+    )
 
 def add_miner_args(cls, parser):
     """Add miner specific arguments to the parser."""

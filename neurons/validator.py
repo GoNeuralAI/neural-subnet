@@ -32,7 +32,7 @@ class Validator(BaseValidatorNeuron):
 
         # TODO(developer): Anything specific to your use case you can do here
 
-    def forward(self, synapse: NATextSynapse=None):
+    async def forward(self, synapse: NATextSynapse=None):
         """
         Validator forward pass. Consists of:
         - Generating the query
@@ -42,7 +42,7 @@ class Validator(BaseValidatorNeuron):
         - Updating the scores
         """
         
-        return forward(self, synapse)
+        return await forward(self, synapse)
     
     async def forward_fn(self, synapse: NATextSynapse=None):
         time.sleep(5)
