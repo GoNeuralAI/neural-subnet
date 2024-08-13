@@ -5,10 +5,12 @@ import os
 import time
 
 from neuralai.protocol import NATextSynapse
-from neuralai.validator.reward import get_rewards
+from neuralai.validator.reward import (
+    get_rewards, calculate_scores
+)
 from neuralai.utils.uids import get_forward_uids
 from neuralai.validator.task_manager import TaskManager
-from nerualai.validator import utils
+from neuralai.validator import utils
 
 def decode_base64(data, description):
     """Decode base64 data and handle potential errors."""
@@ -19,7 +21,7 @@ def decode_base64(data, description):
     except base64.binascii.Error as e:
         raise ValueError(f"Failed to decode {description} data: {e}")
 
-async def save_synapse_files(synapse, index, base_dir='validation'):
+def save_synapse_files(synapse, index, base_dir='validation'):
     # Create a unique subdirectory for each response under validation/results
     save_dir = os.path.join(base_dir, 'results', str(index))
     
@@ -118,12 +120,17 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
         
         for index, response in enumerate(responses):
             try:
-                await save_synapse_files(response, forward_uids[index])
+                save_synapse_files(response, forward_uids[index])
             except ValueError as e:
                 print(f"Error saving files for response {forward_uids[index]}: {e}")
                 
+        scores = []
+                
         for index, response in enumerate(responses):
-            await utils.validate(self.config.validation.endpoint, response.prompt_text, forward_uids[index])
+            result = await utils.validate(
+                self.config.validation.endpoint, task, int(forward_uids[index])
+            )
+            scores.append(result)
         
         # if forward_uids:
         #     bt.logging.info(f"Received responses from miners: {responses}")
@@ -132,15 +139,20 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
         # res_time = [response.dendrite.process_time for response in responses]
         
         # Log the results for monitoring purposes.
-        rewards = get_rewards(self, responses=responses, all_uids=avail_uids, for_uids=forward_uids)
+        rewards = get_rewards(responses=scores, all_uids=avail_uids, for_uids=forward_uids)
+        
+        scores = calculate_scores(rewards)
 
-        bt.logging.info(f"Updated scores: {rewards}")
+        bt.logging.info(f"Updated scores: {scores}")
+        self.update_scores(scores, avail_uids)
         # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
         # self.update_scores(rewards, avail_uids)
     else:
         bt.logging.error(f"No prompt is ready yet")
+        
     # Adjust the scores based on responses from miners.
     taken_time = time.time() - start_time
+    
     if taken_time < loop_time and forward_uids:
         bt.logging.info(f"== Taken time: {taken_time} | Sleeping for {loop_time - taken_time} seconds ==")
         time.sleep(loop_time - taken_time)

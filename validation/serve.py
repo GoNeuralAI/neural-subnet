@@ -1,8 +1,10 @@
 import os
+import io
 import torch
 import clip
 import uvicorn
 import argparse
+from pydantic import BaseModel
 from PIL import Image 
 import cv2
 from pytorch3d.io import load_objs_as_meshes
@@ -19,11 +21,18 @@ from fastapi import FastAPI, HTTPException, File, UploadFile, Form
 from fastapi.responses import FileResponse
 from transformers import CLIPProcessor, CLIPModel
 
+class ValidateRequest(BaseModel):
+    prompt: str
+    uid: int = 0
+    
+class ValidateResponse(BaseModel):
+    score: float
+    
 app = FastAPI()
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=10025)
+    parser.add_argument("--port", type=int, default=8094)
     args, extras = parser.parse_known_args()
     return args, extras
 
@@ -36,17 +45,28 @@ global render_params
 render_params = {}
 
 # Set up the directory and file paths
-DATA_DIR = './files'
+DATA_DIR = './results'
 OUTPUT_DIR = './output_images'
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
+# Function to load an image and prepare for CLIP
+def load_image(image_buffer):
+    image = Image.open(image_buffer).convert("RGB")
+    preprocess = transforms.Compose([
+        transforms.Resize((224, 224)),  # Resize the image to match the input size expected by the model
+        transforms.ToTensor(),          # Convert the image to a tensor
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalize the image
+    ])
+    return preprocess(image).unsqueeze(0).to(device)
     
 def render_mesh(obj_file: str, distance: float = 3.0, elevation: float = 20.0, azimuth: float = 0.0, 
                 image_size: int = 512, angle_step: int = 30):
     global image_path
-    image_path = []
+    render_images = []
+    before_render = []
     try:
         # Load the mesh
         mesh = load_objs_as_meshes([obj_file], device=device)
@@ -108,37 +128,44 @@ def render_mesh(obj_file: str, distance: float = 3.0, elevation: float = 20.0, a
             alpha = alpha.unsqueeze(0).expand_as(image)  # Match the shape of the image
             image = image * alpha + black_background * (1 - alpha)
             
-            # Save the image
-            image_filename = os.path.join(OUTPUT_DIR, f'image_{angle}.png')
-            save_image(image, image_filename)  # Save image
-            print(f'Saved image to {image_filename}')
-            image_path.append(image_filename)
-        return image_path
+            ndarr = image.mul(255).clamp(0, 255).byte().numpy().transpose(1, 2, 0)  # Convert to [H, W, C]
+            pil_image = Image.fromarray(ndarr)
+            buffer = io.BytesIO()
+            pil_image.save(buffer, format='PNG')  # Save the PIL image to the buffer
+            buffer.seek(0)
+            before_render.append(buffer)
+            
+            loaded_image = load_image(buffer)
+            render_images.append(loaded_image)
+            
+        return render_images, before_render
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 async def render(
-    prompt_image: str = Form(..., description="Prompt Image or Text (as a string)"),
-    # preview_image: UploadFile = File(..., description="Preview Image"),
-    # objective_file: UploadFile = File(..., description="Objective File"),
-    # mtl_file: UploadFile = File(..., description=".MTL File"),
-    # png_file: UploadFile = File(..., description="PNG File (Embedding)")
+    prompt_image: str,
+    id: int = 1
 ):
     global render_params
-
+    
+    print(f"promt_image: {prompt_image} : id={id}")
     # Store parameters
     render_params = {
         "prompt_image": prompt_image,
-        "preview_image_path": os.path.join(DATA_DIR, preview_image.filename)
+        "preview_image_path": os.path.join(DATA_DIR, f"{id}/preview.png")
     }
 
     # Use the uploaded objective file for rendering
-    obj_file = os.path.join(DATA_DIR, objective_file.filename)
+    obj_file = os.path.join(DATA_DIR, f"{id}/output.obj")
+
+    # Print the file size
     image_files = render_mesh(obj_file)
+    
+    print(f"output mesh:{len(image_files)}")
     if not image_files:
         raise HTTPException(status_code=500, detail="Rendering failed")
     
-    return {"image_files": image_files}
+    return image_files
 
 @app.get("/download/{angle}")
 def download_image(angle: int):
@@ -147,13 +174,15 @@ def download_image(angle: int):
         raise HTTPException(status_code=404, detail="Image not found")
     return FileResponse(image_filename)
 
-@app.post("/validate")
-def validate():
-    render()
+@app.post("/validate/")
+async def validate(data: ValidateRequest) -> ValidateResponse:
+    prompt = data.prompt
+    uid = data.uid
+    
     global render_params
     try:
-        output_folder=OUTPUT_DIR
-        prompt=render_params.get("prompt_image")
+        rendered_images, before_images = await render(prompt_image=prompt, id=uid)
+        print(len(rendered_images))
         preview_image_path = render_params.get("preview_image_path")
 
         # Load the cuda & CLIP model
@@ -161,31 +190,12 @@ def validate():
         model, preprocess = clip.load("ViT-B/32", device=device)
 
         # Image processing
-        preprocess = transforms.Compose([
-            transforms.Resize((224, 224)),  # Resize the image to match the input size expected by the model
-            transforms.ToTensor(),          # Convert the image to a tensor
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalize the image
-        ])
-
-
-        # Function to load an image and prepare for CLIP
-        def load_image(image_path):
-            image = Image.open(image_path).convert("RGB")
-            return preprocess(image).unsqueeze(0).to(device)
-
-        # Function to load an image and prepare for CLIP
-        def load_image(image_path):
-            image = Image.open(image_path).convert("RGB")
-            return preprocess(image).unsqueeze(0).to(device)
-
-
-        # Retrieve all image file paths from the output folder
-        rendered_images_paths = [os.path.join(output_folder, f) for f in os.listdir(output_folder) if f.endswith(('.png', '.jpg', '.jpeg'))]
 
         # Load all rendered images
-        rendered_images = [load_image(path ) for path in rendered_images_paths]
+        print("--------start render images-------------")
         preview_image = load_image(preview_image_path)
-        rendered_images = [load_image(path) for path in rendered_images_paths]
+
+        print("--------end rendered images-------------")
 
         # Function to compute similarity using CLIP
         def compute_clip_similarity(image1, image2):
@@ -215,20 +225,13 @@ def validate():
             with torch.no_grad():
                 similarity = torch.nn.functional.cosine_similarity(text_embeddings, image_embeddings).item()
             return similarity
-
-        # Prompt to Preview Image Similarity (S0)
-        # For text-to-3D generation, the similarity between the textual prompt and the preview image is calculated using a CLIP model.
-        # Formula:    S_0=CLIP_similarity ( Prompt,Preview Image )
-
-        # if the prompt is text
+        
         S0 = compute_clip_similarity_prompt(prompt, preview_image_path)
 
-        # if prompt is image
-        # prompt_image_path = r'C:\Users\Admin\3rd generation\generated_image.png'
-        # prompt_image = load_image(prompt_image_path)
-        # S0 = compute_clip_similarity(prompt_image, preview_image)  
+        print(f"similarity: {S0}")
 
         Si = [compute_clip_similarity(preview_image, img) for img in rendered_images]
+        print(f"similarities: {Si}")
 
         def resize_image(image, target_size=(256, 256)):
             """Resize an image to the target size."""
@@ -238,54 +241,25 @@ def validate():
             """Convert PIL Image to OpenCV format and resize."""
             image = resize_image(image)  # Resize image to ensure dimensions match
             return cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-
-        # Example of checking dimensions
-        test_image1 = Image.open(preview_image_path)
-        test_image2 = Image.open(rendered_images_paths[0])
-
-        # Assuming preview_image_path is your 'ideal' image and rendered_images_paths contains the rendered variants
-        # Ensure you have at least one rendered image path available
-        # Preview Image Quality Assessment (Q0)
-        # The quality of the preview image is assessed to ensure it meets a minimum quality threshold. This score ranges from 0 to 1.
-        if rendered_images_paths:
-            print(len(rendered_images_paths))
-            Q0 = ssim(pil_to_cv(Image.open(preview_image_path)), pil_to_cv(Image.open(rendered_images_paths[0])), win_size=3)
-            Qi = [ssim(pil_to_cv(Image.open(preview_image_path)), pil_to_cv(Image.open(rendered_images_paths[path])), win_size=3) for path in range(1,len(rendered_images_paths))]
+        
+        if rendered_images and before_images:
+            Q0 = ssim(pil_to_cv(Image.open(preview_image_path)), pil_to_cv(Image.open(before_images[0])), win_size=3)
+            Qi = [ssim(pil_to_cv(Image.open(preview_image_path)), pil_to_cv(Image.open(before_image)), win_size=3) for before_image in before_images]
         else:
             Q0 = 0  # No comparison available, set to 0 or an appropriate value indicating no data
             Qi = []
 
-        # Geometric Mean of Similarity Scores (Sgeo)
-        # To ensure that poor quality on side and back views is penalized more heavily, the geometric mean of the similarity scores is computed.
-        # Formula:    S_geo  = 〖( ∏_(i=1 to 12)〖S_i 〗)〗^(1/12)
-        # S_geo = np.sum(Si)**(1/len(Si))
         S_geo = np.exp(np.log(Si).mean())
-
-        # Geometric Mean of Quality Scores (Qgeo)
-        # The geometric mean of the quality scores is computed to ensure that all rendered images meet a minimum quality threshold.
-        # Formula:    Q_geo  = 〖( ∏_(i=1)^12〖Q_i〗)〗^(1/12)
-        # print(len(Qi))
-
-        # Q_geo = np.sum(Qi)**(1/len(Qi))
         Q_geo = np.exp(np.log(Qi).mean())
-        # print(S0 ,S_geo ,Q0 , Q_geo)
 
         # Total Similarity Score (Stotal)
-        # The total similarity score is the sum of the product of the similarity score between the prompt and preview image (S0) and the geometric mean of the similarity scores (Sgeo), and the product of the quality score of the preview image (Q0) and the geometric mean of the quality scores (Qgeo).
-        # Formula:    S_total  = S_0  × S_geo  + Q_0  × Q_geo
         S_total = S0 * S_geo + Q0 * Q_geo
 
-        # print(S_total)
+        print(S_total)
 
-        return {
-            "S0": S0,
-            "Si": Si,
-            "Q0": Q0,
-            "Qi": Qi,
-            "S_geo": S_geo,
-            "Q_geo": Q_geo,
-            "S_total": S_total
-        }
+        return ValidateResponse(
+            score=S_total
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

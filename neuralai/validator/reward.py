@@ -21,23 +21,37 @@ from typing import List
 import bittensor as bt
 from neuralai.protocol import NATextSynapse
 
-def reward(response: NATextSynapse) -> float:
-    """
-    Reward the miner response to the dummy request. This method returns a reward
-    value for the miner, which is used to update the miner's score.
-
-    Returns:
-    - float: The reward value for the miner.
-    """
-    return 0.5 if response.out_obj is "obj" else 1
-
-
-def get_rewards(self,  responses: List,  all_uids: List,  for_uids: List) -> np.ndarray:
+def get_rewards(responses: List,  all_uids: List,  for_uids: List) -> np.ndarray:
     # Get all the reward results by iteratively calling your reward() function.
     # Cast response to int as the reward function expects an int type for response.
     
     # Remove any None values
     # responses = [response for response in responses if response.out_obj is not "obj"]
     return np.array(
-        [reward( responses[for_uids.index(uid)] ) if uid in for_uids else 0 for uid in all_uids]
+        [responses[for_uids.index(uid)]['score'] if uid in for_uids else 0 for uid in all_uids]
     )
+
+def calculate_scores(rewards):
+    """
+    Normalize the rewards to a range of [0, 1] and apply the transformation y = x^2.
+    
+    Args:
+        rewards (list): A list of reward values.
+    
+    Returns:
+        list: A list of transformed scores.
+    """
+    # Find max and min values
+    max_reward = max(rewards)
+    min_reward = min(rewards)
+
+    # Normalize the rewards to [0, 1]
+    normalized_rewards = [
+        (r - min_reward) / (max_reward - min_reward) if max_reward > min_reward else 0
+        for r in rewards
+    ]
+
+    # Apply the transformation y = x^2
+    scores = [x**2 for x in normalized_rewards]
+
+    return scores
