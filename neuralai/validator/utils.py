@@ -8,6 +8,7 @@ import base64
 
 async def validate(val_url: str, prompt: str, uid: int):
     url = urllib.parse.urljoin(val_url, "/validate/")
+    bt.logging.debug(f"=============={url} ========={uid}")
     async with aiohttp.ClientSession() as session:
         try:
             bt.logging.debug(f"================**********=======================")

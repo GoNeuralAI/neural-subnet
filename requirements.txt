@@ -6,3 +6,5 @@ pytest>=8
 torch>=2
 numpy>=1
 setuptools>=68
+httpx>=0.23.0
+python-dotenv>=1.0.0
