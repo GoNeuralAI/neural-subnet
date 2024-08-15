@@ -1,15 +1,17 @@
 <div align="center">
 
 # **NeuralAI** <!-- omit in toc -->
-[![Discord Chat](https://img.shields.io/discord/308323056592486420.svg)](https://discord.gg/bittensor)
+[![Discord Chat](https://img.shields.io/discord/308323056592486420.svg)](https://discord.gg/neuralai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
 
 ---
 
-## The Incentivized Internet <!-- omit in toc -->
+## 3D Asset Generator <!-- omit in toc -->
 
-[Discord](https://discord.gg/bittensor) • [Network](https://taostats.io/) • [Research](https://bittensor.com/whitepaper)
+[Discord](https://discord.gg/neuralai) • [Website](https://goneural.ai/) • [App](https://app.goneural.ai)
 </div>
+
+![NeuralAI Banner](https://pbs.twimg.com/profile_banners/1763880228567269376/1722541200/1500x500)
 
 ---
 - [Introduction](#introduction)
@@ -28,7 +30,7 @@
 
 ## Introduction
 
-NeuralAI is a cutting-edge subnet dedicated to the generation of 3D models using advanced neural network techniques. Our goal is to empower developers and artists with tools that simplify the creation of high-quality 3D assets for various applications, including gaming, virtual reality, and simulations.
+NeuralAI is a Bittensor subnet dedicated to the generation of 3D models using advanced neural network techniques. Our goal is to allow developers and artists access to tools that simplify the creation of high-quality 3D assets for various applications, including gaming, virtual reality, and simulations.
 
 ## Key Features
 
@@ -41,14 +43,14 @@ NeuralAI is a cutting-edge subnet dedicated to the generation of 3D models using
 
 ### Miner
 - Miners in the NeuralAI Subnet are responsible for powering the computational infrastructure that enables the 3D asset generation and processing capabilities.
-- Generally, miners queue and when receive a request (the format will be text format) from validators, they produce 3d mesh object by contributing their computational resources.
+- Generally, miners queue and when receiving a request (the format will be text or image format) from validators, they produce a 3D mesh object by contributing their computational resources.
 - After producing a 3D mesh object, the object is sent to validators who assess and provide scores that evaluate the quality of the production and validators announce the scores to miners about their quality and speed of work.
 
 ### Validator
-- Validators are responsible for verifying and validating miners’ work regarding the quantity of 3d mesh object within the network.
-- First validators assign tasks to available miners by sending prompt made of text format.
+- Validators are responsible for verifying and validating miners’ work regarding the quality of 3D mesh generation within the network
+- First validators assign tasks to available miners by sending prompt made of text or image format.
 - When receive the miner’s work, they render images in different axis from the response and validate the scores by comparing the similarity of the prompt and rendered images.
-- Validators validate scores with the quality of work and execution time.
+- Validators validate scores based on the quality of work and execution time.
 - After validating the scores, they set miners’ weights and send scores to miners so that miners are able to recognize their performance of models.
 
 ## Installation
@@ -127,7 +129,7 @@ The high-quality 3D assets produced by the subnet can enhance the educational va
 The subnet can be employed in product development workflows, enabling designers, engineers, and product teams to quickly generate 3D prototypes and visualizations based on their conceptual ideas.
 This can streamline the iterative design process and facilitate more informed decision-making during the product development lifecycle.
 
-By focusing on quality, efficient resource utilization, and outlier detection, the proposed subnet design can be a valuable asset in various industries and applications that require high-quality 3D content generation and modeling capabilities.
+By focusing on quality, efficient resource utilization, and outlier detection, the proposed subnet design can be a valuable asset in various industries and applications that require high-quality 3D content generation and modelling capabilities.
 
 
 ## Upgrade
@@ -136,4 +138,4 @@ By focusing on quality, efficient resource utilization, and outlier detection, t
 - Version 2 will extend to validate the miners’ generation capacity as well as quality. We will include additional synapses like “Discovery”, “Feedback”.
 “Discovery” synapse will ask miners for their generation capacity which will incentivize miners include multi-GPUs to increase generation capacity. “Feedback” synapse will let miners get feedback from their generation results to further improve their generation results.
 
-Further subnet roadmap should be discussed among the team
+Further subnet roadmap is in progress.
