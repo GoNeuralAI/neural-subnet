@@ -45,5 +45,4 @@ class TaskManager:
     async def get_task(self):
         task = taskLib()
         prompt = await task.get_task()
-        bt.logging.debug(f"prompts are: {prompt}")
         return prompt

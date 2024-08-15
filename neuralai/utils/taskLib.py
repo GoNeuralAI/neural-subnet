@@ -14,7 +14,6 @@ class taskLib:
             bt.logging.error("NEURAL_API_URL environment variable is not set.")
             return None
         
-        bt.logging.info(f"Fetching prompts from: {API_URL}")        
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(API_URL)

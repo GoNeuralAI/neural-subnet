@@ -8,14 +8,12 @@ import base64
 
 async def validate(val_url: str, prompt: str, uid: int):
     url = urllib.parse.urljoin(val_url, "/validate/")
-    bt.logging.debug(f"=============={url} ========={uid}")
     async with aiohttp.ClientSession() as session:
         try:
-            bt.logging.debug(f"================**********=======================")
             async with session.post(url, json={"prompt": prompt, "uid": uid}) as response:
                 if response.status == 200:
                     results = await response.json()
-                    bt.logging.debug(f"*****************{results}")
+                    bt.logging.debug(f"===================={uid} : {results}==================")
                     return results
                 else:
                     bt.logging.error(f"Generation failed. Please try again.: {response.status}")

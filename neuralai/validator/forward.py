@@ -92,9 +92,7 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     if synapse: #in case of Validator API from users
         nas = synapse
     else:
-        print("sdfsdfsdfsdfdsfsdf=============:")
         task = await self.task_manager.prepare_task()
-        print(f"sdfsdfsdfsdfdsfsdf=============: {task}")
         nas = NATextSynapse(prompt_text=task, timeout=self.config.generation.timeout)
         
     if task:
