@@ -28,7 +28,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Generate a signature")
-    parser.add_argument("--message", help="The message to sign", type=str)
+    parser.add_argument("--message", help="coldkey sign", type=str)
     parser.add_argument("--name", help="The wallet name", type=str)
     args = parser.parse_args()
 
