@@ -163,9 +163,7 @@ class BaseValidatorNeuron(BaseNeuron):
                 import time
                 time.sleep(1)
                 
-                if self.step % 5 == 0:
-                    self.sync()
-                    bt.logging.info(f"megagraph sync: {self.step}")
+                self.sync()
 
                 self.step += 1
 
