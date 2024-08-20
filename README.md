@@ -135,7 +135,6 @@ By focusing on quality, efficient resource utilization, and outlier detection, t
 ## Upgrade
 - Version 1 focuses on validating the quality of miner responses in an acceptable duration. validators Validate miners with “Challenge” synapse only.
 
-- Version 2 will extend to validate the miners’ generation capacity as well as quality. We will include additional synapses like “Discovery”, “Feedback”.
-“Discovery” synapse will ask miners for their generation capacity which will incentivize miners include multi-GPUs to increase generation capacity. “Feedback” synapse will let miners get feedback from their generation results to further improve their generation results.
+- Version 2 will extend to validate the miners’ generation capacity as well as quality. In Version 1, it covers only text to 3d generation, we will update image to 3d as well and integrate with our end-user app when the quality of miner generation results will rise and better than our edge of our app.
 
 Further subnet roadmap is in progress.

@@ -135,6 +135,8 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
         bt.logging.error(f"No prompt is ready yet")
         
     # Adjust the scores based on responses from miners.
+    
+    # res_time = [response.dendrite.process_time for response in responses]
     taken_time = time.time() - start_time
     
     if taken_time < loop_time and forward_uids:

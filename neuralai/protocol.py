@@ -20,6 +20,8 @@ class NATextSynapse(bt.Synapse):
     out_mtl: str = "mtl"
     # Query response timeout
     timeout: int = 100
+    # S3 store address
+    store_addr: str = ""
     
     computed_body_hash: str = ""
 

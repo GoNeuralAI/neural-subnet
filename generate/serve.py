@@ -185,8 +185,8 @@ async def _generate_image(prompt: str):
 # Generate preview images with zero123plus model
 async def _generate_preview(input_image):
     print('Generating preview images')
-    input_image = remove_background(input_image, rembg_session)
     input_image.save(os.path.join(image_path, 'preview.png'))
+    input_image = remove_background(input_image, rembg_session)
     
     input_image = resize_foreground(input_image, 0.85)
 

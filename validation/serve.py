@@ -109,18 +109,30 @@ async def validate(data: ValidateRequest) -> ValidateResponse:
             image = resize_image(image)  # Resize image to ensure dimensions match
             return cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
         
+        def calculate_image_entropy(image):
+            """Calculate the entropy of an image."""
+            image = resize_image(image)  # Resize image to ensure dimensions match
+            histogram = np.histogram(image, bins=256, range=[0, 256])[0]
+            histogram_normalized = histogram / histogram.sum()
+            histogram_normalized = histogram_normalized[histogram_normalized > 0]  # Remove zeros
+            entropy = -np.sum(histogram_normalized * np.log2(histogram_normalized))
+            return entropy
+        
         if rendered_images and before_images:
-            Q0 = ssim(pil_to_cv(Image.open(preview_image_path)), pil_to_cv(Image.open(before_images[0])), win_size=3)
-            Qi = [ssim(pil_to_cv(Image.open(preview_image_path)), pil_to_cv(Image.open(before_image)), win_size=3) for before_image in before_images]
+            Q0 = calculate_image_entropy(Image.open(preview_image_path))
+            Qi = [calculate_image_entropy(Image.open(before_image)) for before_image in before_images]
         else:
             Q0 = 0  # No comparison available, set to 0 or an appropriate value indicating no data
             Qi = []
+            
+        print(f"Q0: {Q0}")
+        print(f"Qi: {Qi}")
 
         S_geo = np.exp(np.log(Si).mean())
         Q_geo = np.exp(np.log(Qi).mean())
 
         # Total Similarity Score (Stotal)
-        S_total = S0 * S_geo + Q0 * Q_geo
+        S_total = S0 * S_geo * Q0 * Q_geo
 
         print(S_total)
 
