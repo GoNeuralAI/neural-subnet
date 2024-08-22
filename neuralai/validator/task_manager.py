@@ -3,7 +3,7 @@ import random
 from neuralai.utils.taskLib import taskLib
 
 class TaskManager:
-    verbose = 0 #0: test | 1: main
+    verbose = 1 #0: test | 1: main
     
     def __init__(self):
         super(TaskManager, self).__init__()
@@ -19,12 +19,12 @@ class TaskManager:
                 # "Bird in flight",
                 # "Fish swimming in the sea",
                 # "Butterfly fluttering through the garden",
-                "Dog chasing after a ball",
+                # "Dog chasing after a ball",
                 # "Squirrel scurrying up the tree",
                 # "Hummingbird hovering near the flowers",
                 # "Frog leaping across the pond",
                 # "Wind howling through the trees",
-                # "Waves crashing against the shore",
+                "Waves crashing against the shore",
                 # "Ant marching across the ground",
                 # "Rabbit bounding through the meadow",
                 # "Dragonfly darting between the reeds",

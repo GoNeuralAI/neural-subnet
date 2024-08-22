@@ -119,20 +119,20 @@ async def validate(data: ValidateRequest) -> ValidateResponse:
             return entropy
         
         if rendered_images and before_images:
-            Q0 = calculate_image_entropy(Image.open(preview_image_path))
+            # Q0 = calculate_image_entropy(Image.open(preview_image_path))
             Qi = [calculate_image_entropy(Image.open(before_image)) for before_image in before_images]
         else:
-            Q0 = 0  # No comparison available, set to 0 or an appropriate value indicating no data
+            # Q0 = 0  # No comparison available, set to 0 or an appropriate value indicating no data
             Qi = []
             
-        print(f"Q0: {Q0}")
+        # print(f"Q0: {Q0}")
         print(f"Qi: {Qi}")
 
         S_geo = np.exp(np.log(Si).mean())
         Q_geo = np.exp(np.log(Qi).mean())
 
         # Total Similarity Score (Stotal)
-        S_total = S0 * S_geo * Q0 * Q_geo
+        S_total = S0 * 0.3 + S_geo * 0.5 + Q_geo * 0.2
 
         print(S_total)
 

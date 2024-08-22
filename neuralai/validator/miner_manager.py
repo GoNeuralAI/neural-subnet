@@ -9,7 +9,7 @@ class MinerManager:
     def get_miner_status(self, uids: List[int]):
         all_axons = self.validator.metagraph.axons
         query_axons = [all_axons[uid] for uid in uids]
-        synapse = NAStatus()
+        synapse = NAStatus(sn_version=self.validator.spec_version)
         responses = self.validator.dendrite.query(
             query_axons,
             synapse,

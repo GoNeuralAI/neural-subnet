@@ -116,6 +116,15 @@ class Miner(BaseMinerNeuron):
     async def forward_status(self, synapse: NAStatus) -> NAStatus:
         bt.logging.info(f"Current Miner Status: {self.miner_status}")
         synapse.status = self.miner_status
+        if synapse.version > self.spec_version:
+            bt.logging.warning(
+                "Current subnet version is older than validator subnet version. Please update the miner!"
+            )
+        elif synapse.version < self.spec_version:
+            bt.logging.warning(
+                "Current subnet version is higher than validator subnet version. You can ignore this warning!"
+            )
+            
         if self.generation_requests >= self.config.miner.concurrent_limit:
             set_status(self, "generation")
             
