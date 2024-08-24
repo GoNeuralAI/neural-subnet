@@ -9,6 +9,11 @@ import base64
 def set_status(self, status: str="idle"):
     self.miner_status = status
     
+def check_status(self):
+    if self.miner_status == "idle":
+        return True
+    return False
+    
 def check_validator(self, uid: int, interval: int = 300):
     cur_time = time.time()
     bt.logging.debug(f"Checking validator for UID: {uid}")
