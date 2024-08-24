@@ -1,6 +1,4 @@
 import bittensor as bt
-import base64
-import os
 
 import time
 
@@ -10,52 +8,6 @@ from neuralai.validator.reward import (
 )
 from neuralai.utils.uids import get_forward_uids
 from neuralai.validator import utils
-
-def decode_base64(data, description):
-    """Decode base64 data and handle potential errors."""
-    if not data:
-        raise ValueError(f"{description} data is empty or None.")
-    try:
-        return base64.b64decode(data)
-    except base64.binascii.Error as e:
-        raise ValueError(f"Failed to decode {description} data: {e}")
-
-def save_synapse_files(synapse, index, base_dir='validation'):
-    # Create a unique subdirectory for each response under validation/results
-    save_dir = os.path.join(base_dir, 'results', str(index))
-    
-    # Ensure the directory exists
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-
-    # Assuming synapse has these attributes after processing
-    prev_data = synapse.out_prev
-    obj_data = synapse.out_obj
-    mtl_data = synapse.out_mtl
-    texture_data = synapse.out_texture
-
-    # Decode the Base64 encoded data with validation
-    prev_bytes = decode_base64(prev_data, "preview")
-    texture_bytes = decode_base64(texture_data, "texture")
-
-    # Construct file paths
-    prev_path = os.path.join(save_dir, 'preview.png')
-    obj_path = os.path.join(save_dir, 'output.obj')
-    mtl_path = os.path.join(save_dir, 'output.mtl')
-    texture_path = os.path.join(save_dir, 'output.png')
-
-    # Save the files
-    with open(prev_path, 'wb') as f:
-        f.write(prev_bytes)
-
-    with open(obj_path, 'w') as f:
-        f.write(obj_data)
-
-    with open(mtl_path, 'w') as f:
-        f.write(mtl_data)
-
-    with open(texture_path, 'wb') as f:
-        f.write(texture_bytes)
 
 async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     """
@@ -73,16 +25,18 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     """
     start_time = time.time()
     loop_time = self.config.neuron.task_period
+    gen_time = loop_time * 4 / 5
     
     bt.logging.info("Checking available miners...")
     avail_uids = get_forward_uids(self, count=self.config.neuron.challenge_count)
     
-    bt.logging.info(f"Selected miners: {avail_uids}")
+    bt.logging.info(f"Listed miners: {avail_uids}")
     
     forward_uids = self.miner_manager.get_miner_status(uids=avail_uids)
     
     if not forward_uids:
-        bt.logging.warning("No miners are available!")
+        bt.logging.warning("No miners available!")
+        return
     else:
         bt.logging.info(f"Available miners: {forward_uids}")
     
@@ -106,7 +60,7 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
                 axons=[self.metagraph.axons[uid] for uid in forward_uids],
                 # Construct a dummy query. This simply contains a single integer.
                 synapse=nas,
-                timeout=self.config.generation.timeout,
+                timeout=gen_time,
                 # All responses have the deserialize function called on them before returning.
                 # You are encouraged to define your own deserialization function.
                 deserialize=False,
@@ -114,7 +68,7 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             
             for index, response in enumerate(responses):
                 try:
-                    save_synapse_files(response, forward_uids[index])
+                    utils.save_synapse_files(response, forward_uids[index])
                 except ValueError as e:
                     print(f"Error saving files for response {forward_uids[index]}: {e}")
                     
@@ -135,6 +89,8 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
         bt.logging.error(f"No prompt is ready yet")
         
     # Adjust the scores based on responses from miners.
+    
+    # res_time = [response.dendrite.process_time for response in responses]
     taken_time = time.time() - start_time
     
     if taken_time < loop_time and forward_uids:

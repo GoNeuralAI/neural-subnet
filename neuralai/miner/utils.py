@@ -9,6 +9,11 @@ import base64
 def set_status(self, status: str="idle"):
     self.miner_status = status
     
+def check_status(self):
+    if self.miner_status == "idle":
+        return True
+    return False
+    
 def check_validator(self, uid: int, interval: int = 300):
     cur_time = time.time()
     bt.logging.debug(f"Checking validator for UID: {uid}")
@@ -73,12 +78,10 @@ async def _generate_from_text(gen_url: str, timeout: int, prompt: str):
                         obj_data = zip_file.read('output.obj').decode('utf-8')
                         mtl_data = zip_file.read('output.mtl').decode('utf-8')
                         texture_data = zip_file.read('output.png')  # This will be in bytes
-                    # bt.logging.info(f"Generated successfully: Size = {len(result)}")
                     
                         encoded_prev_data = base64.b64encode(prev_data).decode('utf-8')
                         encoded_texture_data = base64.b64encode(texture_data).decode('utf-8')
                     
-                    bt.logging.debug(f"The result {prev_data}")
                     return {
                         "prev": encoded_prev_data,
                         "obj": obj_data,

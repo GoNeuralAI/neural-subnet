@@ -30,6 +30,24 @@ def get_args():
     args, extras = parser.parse_known_args()
     return args, extras
 
+def resize_image(image, target_size=(256, 256)):
+    """Resize an image to the target size."""
+    return image.resize(target_size, Image.Resampling.LANCZOS)
+
+def pil_to_cv(image):
+    """Convert PIL Image to OpenCV format and resize."""
+    image = resize_image(image)  # Resize image to ensure dimensions match
+    return cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+
+def calculate_image_entropy(image):
+    """Calculate the entropy of an image."""
+    image = resize_image(image)  # Resize image to ensure dimensions match
+    histogram = np.histogram(image, bins=256, range=[0, 256])[0]
+    histogram_normalized = histogram / histogram.sum()
+    histogram_normalized = histogram_normalized[histogram_normalized > 0]  # Remove zeros
+    entropy = -np.sum(histogram_normalized * np.log2(histogram_normalized))
+    return entropy
+
 args, _ = get_args()
 
 # Set up the directory and file paths
@@ -99,28 +117,22 @@ async def validate(data: ValidateRequest) -> ValidateResponse:
 
         Si = [compute_clip_similarity(preview_image, img) for img in rendered_images]
         print(f"similarities: {Si}")
-
-        def resize_image(image, target_size=(256, 256)):
-            """Resize an image to the target size."""
-            return image.resize(target_size, Image.Resampling.LANCZOS)
-
-        def pil_to_cv(image):
-            """Convert PIL Image to OpenCV format and resize."""
-            image = resize_image(image)  # Resize image to ensure dimensions match
-            return cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
         
         if rendered_images and before_images:
-            Q0 = ssim(pil_to_cv(Image.open(preview_image_path)), pil_to_cv(Image.open(before_images[0])), win_size=3)
-            Qi = [ssim(pil_to_cv(Image.open(preview_image_path)), pil_to_cv(Image.open(before_image)), win_size=3) for before_image in before_images]
+            # Q0 = calculate_image_entropy(Image.open(preview_image_path))
+            Qi = [calculate_image_entropy(Image.open(before_image)) for before_image in before_images]
         else:
-            Q0 = 0  # No comparison available, set to 0 or an appropriate value indicating no data
+            # Q0 = 0  # No comparison available, set to 0 or an appropriate value indicating no data
             Qi = []
+            
+        # print(f"Q0: {Q0}")
+        print(f"Qi: {Qi}")
 
         S_geo = np.exp(np.log(Si).mean())
         Q_geo = np.exp(np.log(Qi).mean())
 
         # Total Similarity Score (Stotal)
-        S_total = S0 * S_geo + Q0 * Q_geo
+        S_total = S0 * 0.3 + S_geo * 0.5 + Q_geo * 0.2
 
         print(S_total)
 

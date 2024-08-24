@@ -7,7 +7,7 @@ import bittensor as bt
 # import base miner class which takes care of most of the boilerplate
 from neuralai.base.miner import BaseMinerNeuron
 from neuralai.protocol import NATextSynapse, NAImageSynapse, NAStatus
-from neuralai.miner.utils import set_status, generate, check_validator
+from neuralai.miner.utils import set_status, check_status, generate, check_validator
 
 class Miner(BaseMinerNeuron):
     
@@ -29,22 +29,22 @@ class Miner(BaseMinerNeuron):
         # self.validators[uid]['requests'] = self.validators[uid].get('requests', 0)
         self.generation_requests += 1
         
-        if self.miner_status == "idle":
-            bt.logging.debug(f"====== 3D Generation Started: {synapse.prompt_text} ======")
-            
-            set_status(self, "generation")
-            #send gpu id as a parameter for multi gpu
-            synapse = await generate(self, synapse)
-            
-            self.generation_requests -= 1
-            if self.generation_requests < self.config.miner.concurrent_limit:
-                set_status(self)
-                
-            bt.logging.debug(f"====== 3D Generation Ended ======")
-            
-        else:
+        if not check_status(self):
             bt.logging.warning("Couldn't perform the Generation right now.")
+            return synapse
+        
+        bt.logging.debug(f"====== 3D Generation Started: {synapse.prompt_text} ======")
+        
+        set_status(self, "generation")
+        #send gpu id as a parameter for multi gpu
+        synapse = await generate(self, synapse)
+        
+        self.generation_requests -= 1
+        if self.generation_requests < self.config.miner.concurrent_limit:
+            set_status(self)
             
+        bt.logging.debug(f"====== 3D Generation Ended ======")
+        
         return synapse
     
     async def forward_image(
@@ -116,6 +116,15 @@ class Miner(BaseMinerNeuron):
     async def forward_status(self, synapse: NAStatus) -> NAStatus:
         bt.logging.info(f"Current Miner Status: {self.miner_status}")
         synapse.status = self.miner_status
+        if synapse.sn_version > self.spec_version:
+            bt.logging.warning(
+                "Current subnet version is older than validator subnet version. Please update the miner!"
+            )
+        elif synapse.sn_version < self.spec_version:
+            bt.logging.warning(
+                "Current subnet version is higher than validator subnet version. You can ignore this warning!"
+            )
+            
         if self.generation_requests >= self.config.miner.concurrent_limit:
             set_status(self, "generation")
             
