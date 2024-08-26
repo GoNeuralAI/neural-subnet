@@ -41,6 +41,9 @@ def calculate_scores(rewards):
     Returns:
         list: A list of transformed scores.
     """
+    scores = []
+    if len(rewards) == 0:
+        return scores
     # Find max and min values
     max_reward = max(rewards)
     min_reward = min(rewards)
