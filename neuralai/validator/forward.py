@@ -36,7 +36,6 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     
     if not forward_uids:
         bt.logging.warning("No miners available!")
-        return
     else:
         bt.logging.info(f"Available miners: {forward_uids}")
     
@@ -93,6 +92,6 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     # res_time = [response.dendrite.process_time for response in responses]
     taken_time = time.time() - start_time
     
-    if taken_time < loop_time and len(forward_uids) != 0:
+    if taken_time < loop_time:
         bt.logging.info(f"== Taken time: {taken_time} | Sleeping for {loop_time - taken_time} seconds ==")
         time.sleep(loop_time - taken_time)
