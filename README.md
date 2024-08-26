@@ -87,6 +87,10 @@ pm2 start "python3 neurons/miner.py
 #### Validation endpoint with PM2
 ```commandline
 cd validation
+
+pip install git+https://github.com/openai/CLIP.git
+pip install "git+https://github.com/facebookresearch/pytorch3d.git"
+
 pip install -r requirements.txt
 pm2 start "serve.py --port {port}"
 ```
