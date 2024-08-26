@@ -26,7 +26,6 @@ class Miner(BaseMinerNeuron):
     ) -> NATextSynapse:
         # TODO(developer): Replace with actual implementation logic.
         uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
-        # self.validators[uid]['requests'] = self.validators[uid].get('requests', 0)
         self.generation_requests += 1
         
         if not check_status(self):

@@ -16,6 +16,9 @@ async def validate(val_url: str, prompt: str, uid: int):
                     return results
                 else:
                     bt.logging.error(f"Generation failed. Please try again.: {response.status}")
+                    return {
+                        'score': 0
+                    }
         except aiohttp.ClientConnectorError:
             bt.logging.error(f"Failed to connect to the server. Please try to access again: {val_url}.")
         except TimeoutError:

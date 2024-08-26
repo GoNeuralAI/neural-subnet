@@ -93,6 +93,6 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     # res_time = [response.dendrite.process_time for response in responses]
     taken_time = time.time() - start_time
     
-    if taken_time < loop_time and forward_uids:
+    if taken_time < loop_time and len(forward_uids) != 0:
         bt.logging.info(f"== Taken time: {taken_time} | Sleeping for {loop_time - taken_time} seconds ==")
         time.sleep(loop_time - taken_time)

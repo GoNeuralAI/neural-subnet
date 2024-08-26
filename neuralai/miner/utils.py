@@ -16,7 +16,7 @@ def check_status(self):
     
 def check_validator(self, uid: int, interval: int = 300):
     cur_time = time.time()
-    bt.logging.debug(f"Checking validator for UID: {uid}")
+    bt.logging.debug(f"Checking validator for UID: {uid} : {self.validators[uid]}")
     
     if uid not in self.validators:
         bt.logging.debug("Adding new validator.")
