@@ -2,8 +2,10 @@ import random
 import bittensor as bt
 import numpy as np
 from typing import List
+import os
+import shutil
 
-
+BASE_DIR = 'validation'
 def check_uid_availability(
     metagraph: "bt.metagraph.Metagraph", uid: int, vpermit_tao_limit: int
 ) -> bool:
@@ -54,4 +56,12 @@ def get_forward_uids(
             count - len(candidate_uids),
         )
     uids = np.array(random.sample(available_uids, count))
+
+    cleanup_results(uids)
     return uids
+
+def cleanup_results(results):
+    for reusult in results:
+        reusult_path = os.path.join(BASE_DIR, 'results', str(reusult))
+        if os.path.exists(reusult_path) and os.path.isdir(reusult_path):
+            shutil.rmtree(reusult_path)
