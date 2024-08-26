@@ -24,7 +24,7 @@ class TaskManager:
                 # "Hummingbird hovering near the flowers",
                 # "Frog leaping across the pond",
                 # "Wind howling through the trees",
-                "Waves crashing against the shore",
+                # "Waves crashing against the shore",
                 # "Ant marching across the ground",
                 # "Rabbit bounding through the meadow",
                 # "Dragonfly darting between the reeds",
