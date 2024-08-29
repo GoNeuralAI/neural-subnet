@@ -129,35 +129,46 @@ async def generate_mesh(prompt: str = Body()):
     
     print(prompt)
     # generate image with text-to-image model
-    main_image = await _generate_image(prompt)
+    try:
+        # Generate image with text-to-image model
+        main_image = await _generate_image(prompt)
+        
+        # Generate preview image from the main image
+        prev_images = await _generate_preview(main_image)
+
+        # Generate mesh object from preview images
+        await _generate_mesh(prev_images)
+
+        print(f"Successfully generated")
+
+        # If all steps succeed, return True
+        path = os.path.join(args.output_path, config_name)
+        
+        return {"success": True, "path": path}
     
-    # generate preview image from the main image
-    prev_images = await _generate_preview(main_image)
+    except Exception as e:
+        print(f"Error during processing: {e}")
+        return {"success": False}
 
-    # generate mesh object from preview images
-    mesh_obj = await _generate_mesh(prev_images)
-
-    prev_path_idx = os.path.join(image_path, f'preview.png')
-    mesh_path_idx = os.path.join(mesh_path, f'output.obj')
-    mtl_path_idx = os.path.join(mesh_path, f'output.mtl')
-    texture_path_idx = os.path.join(mesh_path, f'output.png')
+    # prev_path_idx = os.path.join(image_path, f'preview.png')
+    # mesh_path_idx = os.path.join(mesh_path, f'output.obj')
+    # mtl_path_idx = os.path.join(mesh_path, f'output.mtl')
+    # texture_path_idx = os.path.join(mesh_path, f'output.png')
     
-    print("loading...")
-    zip_buffer = BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
-        zip_file.writestr('preview.png', open(prev_path_idx, 'rb').read())
-        zip_file.writestr('output.obj', open(mesh_path_idx, 'r').read())
-        zip_file.writestr('output.mtl', open(mtl_path_idx, 'r').read())
-        zip_file.writestr('output.png', open(texture_path_idx, 'rb').read())
+    # print("loading...")
+    # zip_buffer = BytesIO()
+    # with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+    #     zip_file.writestr('preview.png', open(prev_path_idx, 'rb').read())
+    #     zip_file.writestr('output.obj', open(mesh_path_idx, 'r').read())
+    #     zip_file.writestr('output.mtl', open(mtl_path_idx, 'r').read())
+    #     zip_file.writestr('output.png', open(texture_path_idx, 'rb').read())
     
-    zip_buffer.seek(0)  # Move to the beginning of the BytesIO buffer
+    # zip_buffer.seek(0)  # Move to the beginning of the BytesIO buffer
 
-    print("Files prepared for download.")
+    # print("Files prepared for download.")
 
-    return StreamingResponse(zip_buffer, media_type='application/zip', headers={"Content-Disposition": "attachment; filename=mesh_files.zip"})
+    # return StreamingResponse(zip_buffer, media_type='application/zip', headers={"Content-Disposition": "attachment; filename=mesh_files.zip"})
     
-    # return StreamingResponse(BytesIO(obj_data.encode()), media_type="application/octet-stream") 
-
 
 ### image-to-mesh generation endpoint
 @app.post("/generate_from_image")

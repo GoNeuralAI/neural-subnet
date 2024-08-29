@@ -106,6 +106,8 @@ def render_mesh(obj_file: str, distance: float = 3.0, elevation: float = 20.0, a
             
             loaded_image = load_image(buffer)
             render_images.append(loaded_image)
+        
+        print(len(render_images))
             
         return render_images, before_render
     except Exception as e:

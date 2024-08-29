@@ -65,15 +65,9 @@ cd neural-subnet
 pip install -r requirements.txt
 ```
 
-#### Generation endpoint with PM2
-```commandline
-cd generate
-pip install -r requirements.txt
-pm2 start serve.py --interpreter python3 --name {endpoint} -- configs/instant-mesh-large.yaml --export_texmap --port {port}
-```
-
 #### Run Miner with PM2
 ```comandline
+export S3_BUCKET_NAME=<your-s3-bucket-name> # set if you use S3 Bit Bucket
 pm2 start "python3 neurons/miner.py
     --netuid {netuid}
     --wallet.name {wallet}
@@ -82,7 +76,24 @@ pm2 start "python3 neurons/miner.py
  --name miner
 ```
 
+#### Generation endpoint with PM2
+```commandline
+cd generate
+pip install -r requirements.txt
+pm2 start serve.py --interpreter python3 --name {endpoint} -- configs/instant-mesh-large.yaml --export_texmap --port {port}
+```
+
 ### Running Validators
+
+#### Run Validator with PM@
+```commandline
+pm2 start "python3 neurons/validator.py
+    --netuid {netuid}
+    --wallet.name {wallet}
+    --wallet.hotkey {hotkey}
+    --axon.port {port}"
+ --name validator
+```
 
 #### Validation endpoint with PM2
 ```commandline
@@ -93,16 +104,6 @@ pip install "git+https://github.com/facebookresearch/pytorch3d.git"
 
 pip install -r requirements.txt
 pm2 start "serve.py --port {port}"
-```
-
-#### Run Validator with PM@
-```commandline
-pm2 start "python3 neurons/validator.py
-    --netuid {netuid}
-    --wallet.name {wallet}
-    --wallet.hotkey {hotkey}
-    --axon.port {port}"
- --name validator
 ```
 
 ## Benefit and use cases

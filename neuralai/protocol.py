@@ -2,6 +2,7 @@ import typing
 import bittensor as bt
 import typing
 import pydantic
+from typing import List
 
 # This is the protocol for the dummy miner and validator.
 # It is a simple request-response protocol where the validator sends a request
@@ -45,7 +46,7 @@ class NATextSynapse(bt.Synapse):
         description="3d generation timeout for synapse"
     )
     # S3 store address
-    store_addr: str = ""
+    s3_addr: List[str] = []
     
     computed_body_hash: str = ""
 
