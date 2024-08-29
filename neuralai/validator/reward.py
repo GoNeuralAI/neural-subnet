@@ -42,11 +42,16 @@ def calculate_scores(rewards):
         list: A list of transformed scores.
     """
     scores = []
-    if len(rewards) == 0:
-        return scores
+        
     # Find max and min values
     max_reward = max(rewards)
     min_reward = min(rewards)
+
+    if len(rewards) == 1 and max_reward != 0:
+        return [1]
+
+    if max_reward == min_reward:
+        return [0] * len(rewards)
 
     # Normalize the rewards to [0, 1]
     normalized_rewards = [

@@ -2,9 +2,14 @@ import bittensor as bt
 import urllib.parse
 import aiohttp
 import time
-import zipfile
-import io
+import os
 import base64
+from dotenv import load_dotenv
+from neuralai.miner.s3_bucket import s3_upload, generate_presigned_url
+
+load_dotenv()
+
+S3_BUCKET_USE = os.getenv("S3_BUCKET_USE")
 
 def set_status(self, status: str="idle"):
     self.miner_status = status
@@ -37,30 +42,55 @@ def check_validator(self, uid: int, interval: int = 300):
     
     return False
 
+def read_file(file_path):
+    try:
+        mode = 'rb' if file_path.endswith('.png') else 'r'
+        with open(file_path, mode) as file:
+            content = file.read()
+        return content
+    except FileNotFoundError:
+        return f"File not found: {file_path}"
+    except Exception as e:
+        return str(e)
+
 async def generate(self, synapse: bt.Synapse) -> bt.Synapse:
     url = urllib.parse.urljoin(self.config.generation.endpoint, "/generate_from_text/")
     timeout = synapse.timeout
-    # bt.logging.debug(f"timeout type: {type(timeout)}")
     prompt = synapse.prompt_text
-    synapse_type = type(synapse).__name__
     
-    if synapse_type == "NATextSynapse":
+    if type(synapse).__name__ == "NATextSynapse":
         result = await _generate_from_text(gen_url=url, timeout=timeout, prompt=prompt)
-        bt.logging.debug(f"Generation result type: {type(result)}")
-        
-        # Check if the result is None
-        if result is None:
-            bt.logging.warning("Result is None, returning None")
-            
-        elif isinstance(result, dict) and all(key in result for key in ["prev", "obj", "mtl", "texture"]):
-            synapse.out_prev = result["prev"]
-            synapse.out_obj = result["obj"]
-            synapse.out_mtl = result["mtl"]
-            synapse.out_texture = result["texture"]
+
+        if not result or not result.get('success'):
+            bt.logging.warning("Result is None")
+            return synapse
+
+        abs_path = os.path.join('generate', result['path'])
+        paths = {
+            "preview": os.path.join(abs_path, 'images/preview.png'),
+            "obj": os.path.join(abs_path, 'meshes/output.obj'),
+            "mtl": os.path.join(abs_path, 'meshes/output.mtl'),
+            "texture": os.path.join(abs_path, 'meshes/output.png'),
+        }
+
+        try:
+            if S3_BUCKET_USE != "TRUE":
+                synapse.out_prev = base64.b64encode(read_file(paths["preview"])).decode('utf-8')
+                synapse.out_obj = read_file(paths["obj"])
+                synapse.out_mtl = read_file(paths["mtl"])
+                synapse.out_texture = base64.b64encode(read_file(paths["texture"])).decode('utf-8')
+                synapse.s3_addr = []
+            else:
+                for key, path in paths.items():
+                    file_name = os.path.basename(path)
+                    s3_upload(path, f"{self.generation_requests}/{file_name}")
+                    synapse.s3_addr.append(generate_presigned_url(f"{self.generation_requests}/{file_name}"))
+
             bt.logging.info("Valid result")
-        else:
-            bt.logging.warning("Result is not valid, returning None")
-    
+
+        except Exception as e:
+            bt.logging.error(f"Error reading files: {e}")
+
     return synapse
 
 async def _generate_from_text(gen_url: str, timeout: int, prompt: str):
@@ -71,25 +101,11 @@ async def _generate_from_text(gen_url: str, timeout: int, prompt: str):
             
             async with session.post(gen_url, timeout=client_timeout, data={"prompt": prompt}) as response:
                 if response.status == 200:
-                    zip_buffer = io.BytesIO(await response.read())
-                    with zipfile.ZipFile(zip_buffer, 'r') as zip_file:
-                        # Extract each file's data
-                        prev_data = zip_file.read('preview.png')
-                        obj_data = zip_file.read('output.obj').decode('utf-8')
-                        mtl_data = zip_file.read('output.mtl').decode('utf-8')
-                        texture_data = zip_file.read('output.png')  # This will be in bytes
-                    
-                        encoded_prev_data = base64.b64encode(prev_data).decode('utf-8')
-                        encoded_texture_data = base64.b64encode(texture_data).decode('utf-8')
-                    
-                    return {
-                        "prev": encoded_prev_data,
-                        "obj": obj_data,
-                        "mtl": mtl_data,
-                        "texture": encoded_texture_data
-                    }
+                    result = await response.json()
+                    print("Success:", result)
                 else:
                     bt.logging.error(f"Generation failed. Please try again.: {response.status}")
+                return result
         except aiohttp.ClientConnectorError:
             bt.logging.error(f"Failed to connect to the endpoint. Try to access again: {gen_url}.")
         except TimeoutError:

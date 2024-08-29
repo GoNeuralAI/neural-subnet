@@ -103,7 +103,6 @@ class Miner(BaseMinerNeuron):
             )
             return False, "All passed!"
         except Exception as e:
-            bt.logging.error(f"Error in blacklist: {e}")
             return False, "Hotkey recognized!"
     
     async def blacklist_text(self, synapse: NATextSynapse) -> Tuple[bool, str]:

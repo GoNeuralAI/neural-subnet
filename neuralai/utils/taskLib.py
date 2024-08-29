@@ -7,8 +7,6 @@ import bittensor as bt
 # load_dotenv()
 NEURAL_API_URL = "https://api.goneural.ai/v1/validator-query"
 
-# API_URL = os.getenv('NEURAL_API_URL')
-
 class taskLib:
     async def get_task(self):
         if NEURAL_API_URL is None:

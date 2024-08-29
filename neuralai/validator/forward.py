@@ -1,5 +1,4 @@
 import bittensor as bt
-
 import time
 
 from neuralai.protocol import NATextSynapse
@@ -34,58 +33,65 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     
     forward_uids = self.miner_manager.get_miner_status(uids=avail_uids)
     
-    if not forward_uids:
+    if len(forward_uids) == 0:
         bt.logging.warning("No miners available!")
     else:
         bt.logging.info(f"Available miners: {forward_uids}")
     
-    nas = NATextSynapse()
-    task = None
+        nas = NATextSynapse()
+        task = None
 
-    if synapse: #in case of Validator API from users
-        nas = synapse
-    else:
-        task = await self.task_manager.prepare_task()
-        nas = NATextSynapse(prompt_text=task, timeout=self.config.generation.timeout)
-        
-    if task:
-        # The dendrite client queries the network.
-        scores = []
-        if forward_uids:
-            bt.logging.info(f"Sending tasks to miners: {task}")
-        
-            responses = self.dendrite.query(
-                # Send the query to selected miner axons in the network.
-                axons=[self.metagraph.axons[uid] for uid in forward_uids],
-                # Construct a dummy query. This simply contains a single integer.
-                synapse=nas,
-                timeout=gen_time,
-                # All responses have the deserialize function called on them before returning.
-                # You are encouraged to define your own deserialization function.
-                deserialize=False,
-            )
+        if synapse: #in case of Validator API from users
+            nas = synapse
+        else:
+            task = await self.task_manager.prepare_task()
+            nas = NATextSynapse(prompt_text=task, timeout=self.config.generation.timeout)
             
-            for index, response in enumerate(responses):
-                try:
-                    utils.save_synapse_files(response, forward_uids[index])
-                except ValueError as e:
-                    print(f"Error saving files for response {forward_uids[index]}: {e}")
-                    
-                    
-            for index, response in enumerate(responses):
-                result = await utils.validate(
-                    self.config.validation.endpoint, task, int(forward_uids[index])
+        if task:
+            # The dendrite client queries the network.
+            scores = []
+            if forward_uids:
+                bt.logging.info(f"Sending tasks to miners: {task}")
+            
+                responses = self.dendrite.query(
+                    # Send the query to selected miner axons in the network.
+                    axons=[self.metagraph.axons[uid] for uid in forward_uids],
+                    # Construct a dummy query. This simply contains a single integer.
+                    synapse=nas,
+                    timeout=gen_time,
+                    # All responses have the deserialize function called on them before returning.
+                    # You are encouraged to define your own deserialization function.
+                    deserialize=False,
                 )
-                scores.append(result)
+                bt.logging.info(f"Miner Response Received")
                 
-        rewards = get_rewards(responses=scores, all_uids=avail_uids, for_uids=forward_uids)
-        
-        scores = calculate_scores(rewards)
-        bt.logging.info(f"Updated scores: {scores}")
+                for index, response in enumerate(responses):
+                    try:
+                        utils.save_synapse_files(response, forward_uids[index])
+                    except ValueError as e:
+                        print(f"Error saving files for response {forward_uids[index]}: {e}")
+
+                bt.logging.info("Saved")
                 
-        self.update_scores(scores, avail_uids)
-    else:
-        bt.logging.error(f"No prompt is ready yet")
+                start_vali_time = time.time()
+                        
+                for index, response in enumerate(responses):
+                    result = await utils.validate(
+                        self.config.validation.endpoint, task, int(forward_uids[index])
+                    )
+                    scores.append(result)
+                    
+                bt.logging.info(f"Scoring time: {time.time() - start_vali_time}")
+                    
+            rewards = get_rewards(responses=scores, all_uids=avail_uids, for_uids=forward_uids)
+            bt.logging.info(f"Updated rewards: {rewards}")
+            
+            scores = calculate_scores(rewards)
+            bt.logging.info(f"Updated scores: {scores}")
+                    
+            self.update_scores(scores, avail_uids)
+        else:
+            bt.logging.error(f"No prompt is ready yet")
         
     # Adjust the scores based on responses from miners.
     
