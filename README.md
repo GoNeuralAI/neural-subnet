@@ -80,7 +80,7 @@ pm2 start "python3 neurons/miner.py
 ```commandline
 cd generate
 pip install -r requirements.txt
-pm2 start serve.py --interpreter python3 --name {endpoint} -- configs/instant-mesh-large.yaml --export_texmap --port {port}
+pm2 start serve.py --interpreter python3 --name {endpoint} -- configs/instant-mesh-large.yaml --export_texmap --port {port} #default port 8093
 ```
 
 ### Running Validators
@@ -100,10 +100,12 @@ pm2 start "python3 neurons/validator.py
 cd validation
 
 pip install git+https://github.com/openai/CLIP.git
-pip install "git+https://github.com/facebookresearch/pytorch3d.git"
+pip install git+https://github.com/facebookresearch/pytorch3d.git
+(if you get an isseu with this, please run the command below
+apt-get install python3-dev)
 
 pip install -r requirements.txt
-pm2 start "serve.py --port {port}"
+pm2 start serve.py --interpreter python3 -- {port}" #default 8094
 ```
 
 ## Benefit and use cases

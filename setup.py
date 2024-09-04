@@ -66,7 +66,7 @@ setup(
     description="NeuralAI 3D generation",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/berose/NeuralSN",
+    url="https://github.com/GoNeuralAI/neural-subnet",
     author="https://goneural.ai/",  
     packages=find_packages(),
     include_package_data=True,

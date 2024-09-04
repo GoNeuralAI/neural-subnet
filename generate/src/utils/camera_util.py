@@ -54,6 +54,8 @@ def spherical_camera_pose(azimuths: np.ndarray, elevations: np.ndarray, radius=2
 
     cam_locations = np.stack([xs, ys, zs], axis=-1)
     cam_locations = torch.from_numpy(cam_locations).float()
+    
+    cam_locations = cam_locations[::-1]
 
     c2ws = center_looking_at_camera_pose(cam_locations)
     return c2ws
@@ -96,7 +98,7 @@ def get_zero123plus_input_cameras(batch_size=1, radius=4.0, fov=30.0):
     """
     Get the input camera parameters.
     """
-    azimuths = np.array([30, 90, 150, 210, 270, 330]).astype(float)
+    azimuths = np.array([330, 30, 90, 150, 210, 270]).astype(float)
     elevations = np.array([20, -10, 20, -10, 20, -10]).astype(float)
     
     c2ws = spherical_camera_pose(azimuths, elevations, radius)

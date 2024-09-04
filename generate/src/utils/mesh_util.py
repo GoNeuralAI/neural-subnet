@@ -69,6 +69,7 @@ def save_obj_with_mtl(pointnp_px3, tcoords_px2, facenp_fx3, facetex_fx3, texmap_
         fid.write('vt %f %f\n' % (pp[0], pp[1]))
 
     fid.write('usemtl material_0\n')
+    
     for i, f in enumerate(facenp_fx3):
         f1 = f + 1
         f2 = facetex_fx3[i] + 1
