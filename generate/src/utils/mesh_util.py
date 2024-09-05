@@ -13,6 +13,7 @@ import cv2
 import numpy as np
 import nvdiffrast.torch as dr
 from PIL import Image
+import pywavefront
 
 
 def save_obj(pointnp_px3, facenp_fx3, colornp_px3, fpath):
@@ -88,7 +89,65 @@ def save_obj_with_mtl(pointnp_px3, tcoords_px2, facenp_fx3, facetex_fx3, texmap_
     img = img * (1 - mask) + dilate_img * mask
     img = img.clip(0, 255).astype(np.uint8)
     Image.fromarray(np.ascontiguousarray(img[::-1, :, :]), 'RGB').save(f'{fol}/{na}.png')
+    
+    print(fname)
+    rotate_obj_file(fname, 'x', np.radians(90))
+    
+def rotate_obj_file(file_path, rotation_axis, rotation_angle):
+    # Load the OBJ file
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
 
+    # Extract the vertex coordinates
+    vertices = []
+    for line in lines:
+        if line.startswith('v '):
+            vertices.append([float(x) for x in line.split()[1:]])
+
+    # Convert vertices to a numpy array
+    vertices = np.array(vertices)
+
+    # Define the rotation matrix
+    if rotation_axis == 'x':
+        rotation_matrix = np.array([
+            [1, 0, 0],
+            [0, np.cos(rotation_angle), -np.sin(rotation_angle)],
+            [0, np.sin(rotation_angle), np.cos(rotation_angle)]
+        ])
+    elif rotation_axis == 'y':
+        rotation_matrix = np.array([
+            [np.cos(rotation_angle), 0, np.sin(rotation_angle)],
+            [0, 1, 0],
+            [-np.sin(rotation_angle), 0, np.cos(rotation_angle)]
+        ])
+    elif rotation_axis == 'z':
+        rotation_matrix = np.array([
+            [np.cos(rotation_angle), -np.sin(rotation_angle), 0],
+            [np.sin(rotation_angle), np.cos(rotation_angle), 0],
+            [0, 0, 1]
+        ])
+
+    # Apply the rotation matrix to the vertices
+    rotated_vertices = np.dot(vertices, rotation_matrix)
+
+    # Create a new list to store the modified lines
+    modified_lines = []
+
+    # Iterate over the original lines
+    vertex_index = 0
+    for line in lines:
+        if line.startswith('v '):
+            # Replace the vertex coordinates with the rotated ones
+            modified_lines.append(f'v {rotated_vertices[vertex_index, 0]} {rotated_vertices[vertex_index, 1]} {rotated_vertices[vertex_index, 2]}\n')
+            vertex_index += 1
+        else:
+            # Copy the rest of the lines unchanged
+            modified_lines.append(line)
+
+    # Write the modified lines back to the file
+    with open(file_path, 'w') as f:
+        f.writelines(modified_lines)
+# Example usage
 
 def loadobj(meshfile):
     v = []

@@ -55,8 +55,6 @@ def spherical_camera_pose(azimuths: np.ndarray, elevations: np.ndarray, radius=2
     cam_locations = np.stack([xs, ys, zs], axis=-1)
     cam_locations = torch.from_numpy(cam_locations).float()
     
-    cam_locations = cam_locations[::-1]
-
     c2ws = center_looking_at_camera_pose(cam_locations)
     return c2ws
 
