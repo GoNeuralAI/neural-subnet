@@ -150,25 +150,6 @@ async def generate_mesh(prompt: str = Body()):
         print(f"Error during processing: {e}")
         return {"success": False}
 
-    # prev_path_idx = os.path.join(image_path, f'preview.png')
-    # mesh_path_idx = os.path.join(mesh_path, f'output.obj')
-    # mtl_path_idx = os.path.join(mesh_path, f'output.mtl')
-    # texture_path_idx = os.path.join(mesh_path, f'output.png')
-    
-    # print("loading...")
-    # zip_buffer = BytesIO()
-    # with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
-    #     zip_file.writestr('preview.png', open(prev_path_idx, 'rb').read())
-    #     zip_file.writestr('output.obj', open(mesh_path_idx, 'r').read())
-    #     zip_file.writestr('output.mtl', open(mtl_path_idx, 'r').read())
-    #     zip_file.writestr('output.png', open(texture_path_idx, 'rb').read())
-    
-    # zip_buffer.seek(0)  # Move to the beginning of the BytesIO buffer
-
-    # print("Files prepared for download.")
-
-    # return StreamingResponse(zip_buffer, media_type='application/zip', headers={"Content-Disposition": "attachment; filename=mesh_files.zip"})
-    
 
 ### image-to-mesh generation endpoint
 @app.post("/generate_from_image")
@@ -225,7 +206,6 @@ async def _generate_mesh(input_images):
     with torch.no_grad():
         # get triplane
         planes = mesh_model.forward_planes(input_images, input_cameras)
-        print('Mesh object generated...')
 
         # get mesh
         mesh_path_idx = os.path.join(mesh_path, f'output.obj')
@@ -235,6 +215,8 @@ async def _generate_mesh(input_images):
             use_texture_map=args.export_texmap,
             **infer_config,
         )
+
+        print('Mesh object generated...')
 
         # Generate texture map
         if args.export_texmap:
@@ -251,35 +233,6 @@ async def _generate_mesh(input_images):
             vertices, faces, vertex_colors = mesh_out
             save_obj(vertices, faces, vertex_colors, mesh_path_idx)
         print(f"Mesh saved to {mesh_path_idx}")
-
-        # # Generate video
-        # if args.save_video:
-        #     video_path_idx = os.path.join(video_path, f'output.mp4')
-        #     render_size = infer_config.render_resolution
-        #     render_cameras = get_render_cameras(
-        #         batch_size=1, 
-        #         M=120, 
-        #         radius=args.distance, 
-        #         elevation=20.0,
-        #         is_flexicubes=IS_FLEXICUBES,
-        #     ).to(device)
-            
-        #     frames = render_frames(
-        #         mesh_model, 
-        #         planes, 
-        #         render_cameras=render_cameras, 
-        #         render_size=render_size, 
-        #         chunk_size=chunk_size, 
-        #         is_flexicubes=IS_FLEXICUBES,
-        #     )
-
-        #     save_video(
-        #         frames,
-        #         video_path_idx,
-        #         fps=30,
-        #     )
-        #     print(f"Video saved to {video_path_idx}")
-
     return
 
 if __name__ == "__main__":
