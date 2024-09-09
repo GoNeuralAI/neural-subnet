@@ -129,26 +129,21 @@ async def generate_mesh(prompt: str = Body()):
     
     print(prompt)
     # generate image with text-to-image model
-    try:
-        # Generate image with text-to-image model
-        main_image = await _generate_image(prompt)
-        
-        # Generate preview image from the main image
-        prev_images = await _generate_preview(main_image)
-
-        # Generate mesh object from preview images
-        await _generate_mesh(prev_images)
-
-        print(f"Successfully generated")
-
-        # If all steps succeed, return True
-        path = os.path.join(args.output_path, config_name)
-        
-        return {"success": True, "path": path}
+    # Generate image with text-to-image model
+    main_image = await _generate_image(prompt)
     
-    except Exception as e:
-        print(f"Error during processing: {e}")
-        return {"success": False}
+    # Generate preview image from the main image
+    prev_images = await _generate_preview(main_image)
+
+    # Generate mesh object from preview images
+    await _generate_mesh(prev_images)
+
+    print(f"Successfully generated")
+
+    # If all steps succeed, return True
+    path = os.path.join(args.output_path, config_name)
+    
+    return {"success": True, "path": path}
 
 
 ### image-to-mesh generation endpoint

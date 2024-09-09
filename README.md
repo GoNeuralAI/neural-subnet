@@ -67,7 +67,6 @@ pip install -r requirements.txt
 
 #### Run Miner with PM2
 ```comandline
-export S3_BUCKET_NAME=<your-s3-bucket-name> # set if you use S3 Bit Bucket
 pm2 start "python3 neurons/miner.py
     --netuid {netuid}
     --wallet.name {wallet}
@@ -105,7 +104,7 @@ pip install git+https://github.com/facebookresearch/pytorch3d.git
 apt-get install python3-dev)
 
 pip install -r requirements.txt
-pm2 start serve.py --interpreter python3 -- {port}" #default 8094
+pm2 start serve.py --interpreter python3 -- --port {port} #default 8094
 ```
 
 ## Benefit and use cases

@@ -13,8 +13,6 @@ import cv2
 import numpy as np
 import nvdiffrast.torch as dr
 from PIL import Image
-import pywavefront
-
 
 def save_obj(pointnp_px3, facenp_fx3, colornp_px3, fpath):
 

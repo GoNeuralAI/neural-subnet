@@ -36,7 +36,7 @@ class TaskManager:
                 # "Dolphin leaping out of the water",
                 # "Falling leaves drifting to the ground",
                 # "Tumbleweed rolling across the desert",
-                # "The car should have a sleek, aerodynamic design."
+                "The car should have a sleek, aerodynamic design."
             ]
             
         task = random.choice(prompts)

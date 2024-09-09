@@ -52,16 +52,8 @@ args, _ = get_args()
 
 # Set up the directory and file paths
 DATA_DIR = './results'
-OUTPUT_DIR = './output_images'
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-
-@app.get("/download/{angle}")
-def download_image(angle: int):
-    image_filename = os.path.join(OUTPUT_DIR, f'image_{angle}.png')
-    if not os.path.exists(image_filename):
-        raise HTTPException(status_code=404, detail="Image not found")
-    return FileResponse(image_filename)
 
 @app.post("/validate/")
 async def validate(data: ValidateRequest) -> ValidateResponse:
