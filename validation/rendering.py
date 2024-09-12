@@ -16,7 +16,11 @@ import numpy as np
 from fastapi import  HTTPException
 from torchvision import transforms
 from fastapi.responses import FileResponse
+
 DATA_DIR = './results'
+OUTPUT_DIR = './output_images'
+if not os.path.exists(OUTPUT_DIR):
+    os.makedirs(OUTPUT_DIR)
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -31,7 +35,7 @@ def load_image(image_buffer):
     return preprocess(image).unsqueeze(0).to(device)
 
 
-def render_mesh(obj_file: str, distance: float = 3.0, elevation: float = 20.0, azimuth: float = 0.0, 
+def render_mesh(obj_file: str, distance: float = 1.5, elevation: float = 20.0, azimuth: float = 0.0, 
                 image_size: int = 512, angle_step: int = 30):
     render_images = []
     before_render = []
@@ -40,7 +44,7 @@ def render_mesh(obj_file: str, distance: float = 3.0, elevation: float = 20.0, a
         mesh = load_objs_as_meshes([obj_file], device=device)
         
         # Renderer setup
-        R, T = look_at_view_transform(distance, elevation, azimuth)
+        R, T = look_at_view_transform(distance, elevation, azimuth, at=((0, 0, 1),))
         cameras = PerspectiveCameras(device=device, R=R, T=T)
         raster_settings = RasterizationSettings(
             image_size=image_size,
@@ -96,6 +100,10 @@ def render_mesh(obj_file: str, distance: float = 3.0, elevation: float = 20.0, a
             alpha = alpha.unsqueeze(0).expand_as(image)  # Match the shape of the image
             image = image * alpha + black_background * (1 - alpha)
             
+            # image_filename = os.path.join(OUTPUT_DIR, f'image_{angle}.png')
+            # save_image(image, image_filename)  # Save image
+            # print(f'Saved image to {image_filename}')
+            
             ndarr = image.mul(255).clamp(0, 255).byte().numpy().transpose(1, 2, 0)  # Convert to [H, W, C]
             pil_image = Image.fromarray(ndarr)
             
@@ -106,7 +114,7 @@ def render_mesh(obj_file: str, distance: float = 3.0, elevation: float = 20.0, a
             
             loaded_image = load_image(buffer)
             render_images.append(loaded_image)
-        
+            
         print(len(render_images))
             
         return render_images, before_render

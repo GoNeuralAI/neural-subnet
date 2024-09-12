@@ -3,7 +3,7 @@ import random
 from neuralai.utils.taskLib import taskLib
 
 class TaskManager:
-    verbose = 1 #0: test | 1: main
+    verbose = True # False : test | True: main
     
     def __init__(self):
         super(TaskManager, self).__init__()
@@ -12,7 +12,7 @@ class TaskManager:
         #TODO Preparing the input prompting as text or image
         
         prompts = None
-        if self.verbose == 1:
+        if self.verbose == True:
             prompts = await self.get_task()
         else:
             prompts = [
@@ -36,7 +36,7 @@ class TaskManager:
                 # "Dolphin leaping out of the water",
                 # "Falling leaves drifting to the ground",
                 # "Tumbleweed rolling across the desert",
-                # "The car should have a sleek, aerodynamic design."
+                "The car should have a sleek, aerodynamic design."
             ]
             
         task = random.choice(prompts)

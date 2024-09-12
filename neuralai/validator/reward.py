@@ -43,23 +43,13 @@ def calculate_scores(rewards):
     """
     scores = []
         
-    # Find max and min values
-    max_reward = max(rewards)
-    min_reward = min(rewards)
+    if len(rewards) == 0:
+        return []
+    
+    max_value = max(rewards)
+    if max_value == 0:
+        return [0 for _ in rewards] 
 
-    if len(rewards) == 1 and max_reward != 0:
-        return [1]
-
-    if max_reward == min_reward:
-        return [0] * len(rewards)
-
-    # Normalize the rewards to [0, 1]
-    normalized_rewards = [
-        (r - min_reward) / (max_reward - min_reward) if max_reward > min_reward else 0
-        for r in rewards
-    ]
-
-    # Apply the transformation y = x^2
-    scores = [x**2 for x in normalized_rewards]
-
+    scores = [(x / max_value) ** 2 for x in rewards]
+    
     return scores

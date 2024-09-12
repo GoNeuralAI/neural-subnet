@@ -1,5 +1,6 @@
 import bittensor as bt
 import time
+import datetime
 
 from neuralai.protocol import NATextSynapse
 from neuralai.validator.reward import (
@@ -25,6 +26,13 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     start_time = time.time()
     loop_time = self.config.neuron.task_period
     gen_time = loop_time * 4 / 5
+    scores = []
+    
+    # wandb
+    today = datetime.date.today()
+    if self.wandb_manager.wandb_start != str(today):
+        self.wandb.finish()
+        self.init_wandb()
     
     bt.logging.info("Checking available miners...")
     avail_uids = get_forward_uids(self, count=self.config.neuron.challenge_count)
@@ -35,6 +43,8 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     
     if len(forward_uids) == 0:
         bt.logging.warning("No miners available!")
+        scores = [0 for _ in avail_uids] 
+        self.update_scores(scores, avail_uids)
     else:
         bt.logging.info(f"Available miners: {forward_uids}")
     
@@ -51,7 +61,7 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             # The dendrite client queries the network.
             scores = []
             if forward_uids:
-                bt.logging.info(f"Sending tasks to miners: {task}")
+                bt.logging.info(f"Sent tasks to miners: {task}")
             
                 responses = self.dendrite.query(
                     # Send the query to selected miner axons in the network.
