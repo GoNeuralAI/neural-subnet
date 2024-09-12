@@ -1,0 +1,300 @@
+{
+    "os": "Linux-5.15.0-87-generic-x86_64-with-glibc2.35",
+    "python": "3.10.12",
+    "heartbeatAt": "2024-09-11T17:14:54.010901",
+    "startedAt": "2024-09-11T17:14:53.487570",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--netuid",
+        "182",
+        "--subtensor.network",
+        "test",
+        "--wallet.name",
+        "validator",
+        "--wallet.hotkey",
+        "default",
+        "--axon.port",
+        "30215",
+        "--logging.debug"
+    ],
+    "state": "running",
+    "program": "/workspace/neural-subnet/neurons/validator.py",
+    "codePathLocal": "neurons/validator.py",
+    "codePath": "neurons/validator.py",
+    "git": {
+        "remote": "https://github.com/GoNeuralAI/neural-subnet/",
+        "commit": "9c029dc272f919d0c8208d0d504bee0db6451168"
+    },
+    "email": "aidream2100@gmail.com",
+    "root": "/workspace/neural-subnet",
+    "host": "b8dc45359095",
+    "username": "root",
+    "executable": "/usr/bin/python3",
+    "cpu_count": 48,
+    "cpu_count_logical": 48,
+    "cpu_freq": {
+        "current": 2993.491999999999,
+        "min": 0.0,
+        "max": 0.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2993.492,
+            "min": 0.0,
+            "max": 0.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 200.0,
+            "used": 11.421943664550781
+        }
+    },
+    "gpu": "NVIDIA RTX A6000",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA RTX A6000",
+            "memory_total": 51527024640
+        }
+    ],
+    "memory": {
+        "total": 393.39739990234375
+    }
+}

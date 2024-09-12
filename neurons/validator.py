@@ -10,6 +10,7 @@ from neuralai.validator import forward
 from neuralai.protocol import NATextSynapse
 from neuralai.validator.task_manager import TaskManager
 from neuralai.validator.miner_manager import MinerManager
+from neuralai.validator.wandb_manager import WandbManager
 
 
 class Validator(BaseValidatorNeuron):
@@ -26,6 +27,7 @@ class Validator(BaseValidatorNeuron):
         
         self.task_manager = TaskManager()
         self.miner_manager = MinerManager(validator=self)
+        self.wandb_manager = WandbManager(validator=self)
 
         bt.logging.info("load_state()")
         self.load_state()
