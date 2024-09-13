@@ -28,11 +28,12 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     gen_time = loop_time * 4 / 5
     scores = []
     
+    
     # wandb
     today = datetime.date.today()
-    if self.wandb_manager.wandb_start != str(today):
-        self.wandb.finish()
-        self.init_wandb()
+    if self.wandb_manager.wandb_start != today:
+        self.wandb_manager.wandb.finish()
+        self.wandb_manager.init_wandb()
     
     bt.logging.info("Checking available miners...")
     avail_uids = get_forward_uids(self, count=self.config.neuron.challenge_count)
@@ -81,13 +82,13 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
                     except ValueError as e:
                         print(f"Error saving files for response {forward_uids[index]}: {e}")
 
-                bt.logging.info("Saved")
+                bt.logging.info("Miner results saved")
                 
                 start_vali_time = time.time()
                         
                 for index, response in enumerate(responses):
                     result = await utils.validate(
-                        self.config.validation.endpoint, task, int(forward_uids[index])
+                        self.config.validation.endpoint, task, int(forward_uids[index]), timeout=float(self.config.neuron.task_period)
                     )
                     scores.append(result)
                     
@@ -97,7 +98,6 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             bt.logging.info(f"Updated rewards: {rewards}")
             
             scores = calculate_scores(rewards)
-            bt.logging.info(f"Updated scores: {scores}")
                     
             self.update_scores(scores, avail_uids)
         else:

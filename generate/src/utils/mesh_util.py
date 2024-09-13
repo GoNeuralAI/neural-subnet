@@ -91,6 +91,14 @@ def save_obj_with_mtl(pointnp_px3, tcoords_px2, facenp_fx3, facetex_fx3, texmap_
     print(fname)
     rotate_obj_file(fname, 'x', np.radians(90))
     
+def convert_obj_to_glb(obj_file, output_glb):
+    # Load the .obj file
+    mesh = trimesh.load(obj_file)
+
+    # Export to .glb
+    mesh.export(output_glb, file_type='glb')
+
+    
 def rotate_obj_file(file_path, rotation_axis, rotation_angle):
     # Load the OBJ file
     with open(file_path, 'r') as f:

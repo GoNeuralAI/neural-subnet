@@ -96,7 +96,7 @@ def get_zero123plus_input_cameras(batch_size=1, radius=4.0, fov=30.0):
     """
     Get the input camera parameters.
     """
-    azimuths = np.array([330, 30, 90, 150, 210, 270]).astype(float)
+    azimuths = np.array([300, 0, 60, 120, 180, 240]).astype(float)
     elevations = np.array([20, -10, 20, -10, 20, -10]).astype(float)
     
     c2ws = spherical_camera_pose(azimuths, elevations, radius)

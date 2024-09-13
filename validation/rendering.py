@@ -36,7 +36,7 @@ def load_image(image_buffer):
 
 
 def render_mesh(obj_file: str, distance: float = 1.5, elevation: float = 20.0, azimuth: float = 0.0, 
-                image_size: int = 512, angle_step: int = 30):
+                image_size: int = 512, angle_step: int = 24):
     render_images = []
     before_render = []
     try:
@@ -100,9 +100,9 @@ def render_mesh(obj_file: str, distance: float = 1.5, elevation: float = 20.0, a
             alpha = alpha.unsqueeze(0).expand_as(image)  # Match the shape of the image
             image = image * alpha + black_background * (1 - alpha)
             
-            # image_filename = os.path.join(OUTPUT_DIR, f'image_{angle}.png')
-            # save_image(image, image_filename)  # Save image
-            # print(f'Saved image to {image_filename}')
+            image_filename = os.path.join(OUTPUT_DIR, f'image_{angle}.png')
+            save_image(image, image_filename)  # Save image
+            print(f'Saved image to {image_filename}')
             
             ndarr = image.mul(255).clamp(0, 255).byte().numpy().transpose(1, 2, 0)  # Convert to [H, W, C]
             pil_image = Image.fromarray(ndarr)
