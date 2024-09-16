@@ -3,6 +3,7 @@ import io
 import torch
 import clip
 import uvicorn
+import time
 import argparse
 from pydantic import BaseModel
 from PIL import Image 
@@ -23,6 +24,15 @@ from models import ValidateRequest, ValidateResponse
 from rendering import render, load_image
 
 app = FastAPI()
+
+# Load the cuda & CLIP model
+device = "cuda" if torch.cuda.is_available() else "cpu"
+try:
+    model, preprocess = clip.load("ViT-B/32", device=device)
+    clip_model = CLIPModel.from_pretrained('openai/clip-vit-base-patch32')
+    processor = CLIPProcessor.from_pretrained('openai/clip-vit-base-patch32')
+except Exception as e:
+    print("load model error")
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -48,6 +58,33 @@ def calculate_image_entropy(image):
     entropy = -np.sum(histogram_normalized * np.log2(histogram_normalized))
     return entropy
 
+def compute_clip_similarity(image1, image2):
+    global model
+    with torch.no_grad():
+        image1_features = model.encode_image(image1)
+        image2_features = model.encode_image(image2)
+        similarity = torch.nn.functional.cosine_similarity(image1_features, image2_features).item()
+    return similarity
+
+def compute_clip_similarity_prompt(text, image_path):
+    global clip_model, processor
+    print("successfully imported")
+    # Preprocess the inputs
+    image = Image.open(image_path)  # Change to your image path        
+    image_inputs = processor(images=image, return_tensors="pt")
+    text_inputs = processor(text=text, return_tensors="pt", truncation=True)
+    
+    # Get the embeddings
+    image_embeddings = clip_model.get_image_features(**image_inputs)
+    text_embeddings = clip_model.get_text_features(**text_inputs)
+    
+    # Normalize the embeddings to unit length
+    image_embeddings = image_embeddings / image_embeddings.norm(dim=1, keepdim=True)
+    text_embeddings = text_embeddings / text_embeddings.norm(dim=1, keepdim=True)
+    with torch.no_grad():
+        similarity = torch.nn.functional.cosine_similarity(text_embeddings, image_embeddings).item()
+    return similarity
+
 args, _ = get_args()
 
 # Set up the directory and file paths
@@ -59,49 +96,19 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 async def validate(data: ValidateRequest) -> ValidateResponse:
     prompt = data.prompt
     uid = data.uid
-    
+    start_time = time.time()
     try:
         rendered_images, before_images = await render(prompt_image=prompt, id=uid)
-        print(len(rendered_images))
+        print(f"render time: {time.time() - start_time}")
         preview_image_path = os.path.join(DATA_DIR, f"{uid}/preview.png")
-
-        # Load the cuda & CLIP model
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        model, preprocess = clip.load("ViT-B/32", device=device)
 
         # Load all rendered images
         
         preview_image = load_image(preview_image_path)
-        print("prev_image successfully")
+        print(f"load model time: {time.time() - start_time}")
 
         # Function to compute similarity using CLIP
-        def compute_clip_similarity(image1, image2):
-            with torch.no_grad():
-                image1_features = model.encode_image(image1)
-                image2_features = model.encode_image(image2)
-                similarity = torch.nn.functional.cosine_similarity(image1_features, image2_features).item()
-            return similarity
-
-        def compute_clip_similarity_prompt(text, image_path):
-            # Load the model and processor
-            model = CLIPModel.from_pretrained('openai/clip-vit-base-patch32')
-            processor = CLIPProcessor.from_pretrained('openai/clip-vit-base-patch32')
-            
-            # Preprocess the inputs
-            image = Image.open(image_path)  # Change to your image path        
-            image_inputs = processor(images=image, return_tensors="pt")
-            text_inputs = processor(text=text, return_tensors="pt", truncation=True)
-            
-            # Get the embeddings
-            image_embeddings = model.get_image_features(**image_inputs)
-            text_embeddings = model.get_text_features(**text_inputs)
-            
-            # Normalize the embeddings to unit length
-            image_embeddings = image_embeddings / image_embeddings.norm(dim=1, keepdim=True)
-            text_embeddings = text_embeddings / text_embeddings.norm(dim=1, keepdim=True)
-            with torch.no_grad():
-                similarity = torch.nn.functional.cosine_similarity(text_embeddings, image_embeddings).item()
-            return similarity
+        
         
         S0 = compute_clip_similarity_prompt(prompt, preview_image_path)
 
@@ -109,6 +116,9 @@ async def validate(data: ValidateRequest) -> ValidateResponse:
 
         Si = [compute_clip_similarity(preview_image, img) for img in rendered_images]
         print(f"similarities: {Si}")
+        
+        print(f"S calc time: {time.time() - start_time}")
+        
         
         if rendered_images and before_images:
             # Q0 = calculate_image_entropy(Image.open(preview_image_path))
@@ -119,6 +129,9 @@ async def validate(data: ValidateRequest) -> ValidateResponse:
             
         # print(f"Q0: {Q0}")
         print(f"Qi: {Qi}")
+        
+        print(f"Qi time: {time.time() - start_time}")
+        
 
         S_geo = np.exp(np.log(Si).mean())
         Q_geo = np.exp(np.log(Qi).mean())

@@ -26,7 +26,7 @@ from src.utils.camera_util import (
     get_circular_camera_poses,
     get_render_cameras
 )
-from src.utils.mesh_util import save_obj, save_obj_with_mtl
+from src.utils.mesh_util import save_obj, save_obj_with_mtl, convert_obj_to_glb
 from src.utils.infer_util import remove_background, resize_foreground, save_video, render_frames
 
 
@@ -204,6 +204,7 @@ async def _generate_mesh(input_images):
 
         # get mesh
         mesh_path_idx = os.path.join(mesh_path, f'output.obj')
+        mesh_path_glb = os.path.join(mesh_path, f'output.glb')
 
         mesh_out = mesh_model.extract_mesh(
             planes,
@@ -224,6 +225,7 @@ async def _generate_mesh(input_images):
                 tex_map.permute(1, 2, 0).data.cpu().numpy(),
                 mesh_path_idx,
             )
+            convert_obj_to_glb(mesh_path_idx, mesh_path_glb)
         else:
             vertices, faces, vertex_colors = mesh_out
             save_obj(vertices, faces, vertex_colors, mesh_path_idx)

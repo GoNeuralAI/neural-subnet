@@ -6,15 +6,15 @@ import os
 import requests
 import base64
 
-async def validate(val_url: str, prompt: str, uid: int):
+async def validate(val_url: str, prompt: str, uid: int, timeout: float):
     url = urllib.parse.urljoin(val_url, "/validate/")
     async with aiohttp.ClientSession() as session:
         try:
-            client_timeout = aiohttp.ClientTimeout(total=float(20))
-            async with session.post(url, json={"prompt": prompt, "uid": uid}) as response:
+            client_timeout = aiohttp.ClientTimeout(total=timeout/2)
+            async with session.post(url, timeout=client_timeout, json={"prompt": prompt, "uid": uid}) as response:
                 if response.status == 200:
                     results = await response.json()
-                    bt.logging.debug(f"===================={uid} : {results}==================")
+                    bt.logging.debug(f"==================== {uid} : {results} ==================")
                     return results
                 else:
                     bt.logging.error(f"Generation failed. Please try again.: {response.status}")
@@ -52,18 +52,20 @@ def save_synapse_files(synapse, index, base_dir='validation'):
         os.makedirs(save_dir)
     if len(synapse.s3_addr) != 0:
         responses = [requests.get(addr) for addr in synapse.s3_addr]
-        bt.logging.info(f"bbbbbbb: {len(responses)}")
         try:
             for response, file_name in zip(responses, file_names):
                 if response.status_code == 200:
-                    bt.logging.info(f"Processing file: {file_name}")
+                    bt.logging.debug(f"Processing file: {file_name}")
                     save_file(os.path.join(save_dir, file_name), response.content, is_binary=True)
                 else:
                     bt.logging.warning(f"Failed to retrieve {file_name}: Status code {response.status_code}")
         except Exception as e:
             bt.logging.error(f"Error occurred while processing files: {e}")
     else:
-        save_file(os.path.join(save_dir, 'preview.png'), decode_base64(synapse.out_prev, "preview"))
-        save_file(os.path.join(save_dir, 'output.obj'), synapse.out_obj, False)
-        save_file(os.path.join(save_dir, 'output.mtl'), synapse.out_mtl, False)
-        save_file(os.path.join(save_dir, 'output.png'), decode_base64(synapse.out_texture, "texture"))
+        try:
+            save_file(os.path.join(save_dir, 'preview.png'), decode_base64(synapse.out_prev, "preview"))
+            save_file(os.path.join(save_dir, 'output.obj'), synapse.out_obj, False)
+            save_file(os.path.join(save_dir, 'output.mtl'), synapse.out_mtl, False)
+            save_file(os.path.join(save_dir, 'output.png'), decode_base64(synapse.out_texture, "texture"))
+        except Exception as e:
+            print(f"Error saving synapse files: {e}")

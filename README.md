@@ -58,40 +58,47 @@ NeuralAI is a Bittensor subnet dedicated to the generation of 3D models using ad
 ### Running Miners
 We recommend setup using Python>=3.10, PyTorch>=2.1.0, and CUDA>=12.1.
 
-Download the source from the github
+1. First, download the source from the github:
 ```commandline
 git clone https://github.com/GoNeuralAI/neural-subnet/
 cd neural-subnet
-pip install -r requirements.txt
 ```
+2. Install pm2 if you don't have it [pm2.io](https://pm2.io/docs/runtime/guide/installation/).
+3. Then install the `Neural` package: `pip install -e .`
 
 #### Run Miner with PM2
 ```comandline
-pm2 start "python3 neurons/miner.py
+pm2 start python3 neurons/miner.py
     --netuid {netuid}
     --wallet.name {wallet}
     --wallet.hotkey {hotkey}
-    --axon.port {port}"
- --name miner
+    --axon.port {port}
 ```
 
 #### Generation endpoint with PM2
 ```commandline
 cd generate
 pip install -r requirements.txt
-pm2 start serve.py --interpreter python3 --name {endpoint} -- configs/instant-mesh-large.yaml --export_texmap --port {port} #default port 8093
+pm2 start serve.py --interpreter python3 --name {endpoint} -- configs/instant-mesh-large.yaml --export_texmap --port {port #default local port 8093} 
 ```
 
 ### Running Validators
 
+1. First, download the source from the github:
+```commandline
+git clone https://github.com/GoNeuralAI/neural-subnet/
+cd neural-subnet
+```
+2. Install pm2 if you don't have it [pm2.io](https://pm2.io/docs/runtime/guide/installation/).
+3. Then install the `Neural` package: `pip install -e .`
+
 #### Run Validator with PM@
 ```commandline
-pm2 start "python3 neurons/validator.py
+pm2 start python3 neurons/validator.py
     --netuid {netuid}
     --wallet.name {wallet}
     --wallet.hotkey {hotkey}
-    --axon.port {port}"
- --name validator
+    --axon.port {port}
 ```
 
 #### Validation endpoint with PM2
@@ -104,7 +111,7 @@ pip install git+https://github.com/facebookresearch/pytorch3d.git
 apt-get install python3-dev)
 
 pip install -r requirements.txt
-pm2 start serve.py --interpreter python3 -- --port {port} #default 8094
+pm2 start serve.py --interpreter python3 -- --port {port #default local port 8094} 
 ```
 
 ## Benefit and use cases
