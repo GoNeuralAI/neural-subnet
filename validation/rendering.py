@@ -4,6 +4,7 @@ import torch
 from pydantic import BaseModel
 from PIL import Image 
 import cv2
+import trimesh
 from pytorch3d.io import load_objs_as_meshes
 from pytorch3d.renderer import (
     MeshRenderer, MeshRasterizer, RasterizationSettings,
@@ -13,6 +14,7 @@ from pytorch3d.renderer import look_at_view_transform
 from torchvision.utils import save_image
 from skimage.metrics import structural_similarity as ssim
 import numpy as np
+from pytorch3d.structures import Meshes
 from fastapi import  HTTPException
 from torchvision import transforms
 from fastapi.responses import FileResponse
@@ -24,6 +26,25 @@ if not os.path.exists(OUTPUT_DIR):
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
+def load_glb_as_mesh(glb_file, device='cpu'):
+    # Load the .glb file using trimesh
+    print(glb_file)
+    mesh = trimesh.load(glb_file, file_type='glb', force="mesh")
+
+    print(mesh)
+    print(mesh.vertices)
+    print(mesh.faces)
+    # Extract vertices and faces from the trimesh object
+    vertices = torch.tensor(mesh.vertices, dtype=torch.float32, device=device)
+    faces = torch.tensor(mesh.faces, dtype=torch.int64, device=device)
+    print(vertices, faces)
+
+    # Create a PyTorch3D Meshes object
+    pytorch3d_mesh = Meshes(verts=[vertices], faces=[faces])
+    print(pytorch3d_mesh)
+    return pytorch3d_mesh
+
 # Function to load an image and prepare for CLIP
 def load_image(image_buffer):
     image = Image.open(image_buffer).convert("RGB")
@@ -41,7 +62,8 @@ def render_mesh(obj_file: str, distance: float = 1.5, elevation: float = 20.0, a
     before_render = []
     try:
         # Load the mesh
-        mesh = load_objs_as_meshes([obj_file], device=device)
+        mesh = load_glb_as_mesh(glb_file=obj_file, device=device)
+        print(mesh)
         
         # Renderer setup
         R, T = look_at_view_transform(distance, elevation, azimuth, at=((0, 0, 1),))

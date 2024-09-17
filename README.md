@@ -79,7 +79,7 @@ pm2 start python3 neurons/miner.py
 ```commandline
 cd generate
 pip install -r requirements.txt
-pm2 start serve.py --interpreter python3 --name {endpoint} -- configs/instant-mesh-large.yaml --export_texmap --port {port #default local port 8093} 
+pm2 start serve.py --interpreter python3 --name endpoint -- configs/instant-mesh-large.yaml --port 8093 #{port - default local port 8093} 
 ```
 
 ### Running Validators

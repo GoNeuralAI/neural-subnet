@@ -44,7 +44,7 @@ def check_validator(self, uid: int, interval: int = 300):
 
 def read_file(file_path):
     try:
-        mode = 'rb' if file_path.endswith('.png') else 'r'
+        mode = 'rb'
         with open(file_path, mode) as file:
             content = file.read()
         return content
