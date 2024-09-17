@@ -128,7 +128,7 @@ async def render(
     print(f"promt_image: {prompt_image} : id={id}")
     
     # Use the uploaded objective file for rendering
-    obj_file = os.path.join(DATA_DIR, f"{id}/output.obj")
+    obj_file = os.path.join(DATA_DIR, f"{id}/output.glb")
 
     # Print the file size
     image_files = render_mesh(obj_file)

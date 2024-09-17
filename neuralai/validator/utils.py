@@ -39,7 +39,7 @@ def decode_base64(data, description):
     except base64.binascii.Error as e:
         raise ValueError(f"Failed to decode {description} data: {e}")
 
-file_names = ["preview.png", "output.obj", "output.mtl", "output.png"]
+file_names = ["preview.png", "output.glb"]
 
 def save_file(file_path, content, is_binary=True):
     mode = 'wb' if is_binary else 'w'
@@ -64,8 +64,6 @@ def save_synapse_files(synapse, index, base_dir='validation'):
     else:
         try:
             save_file(os.path.join(save_dir, 'preview.png'), decode_base64(synapse.out_prev, "preview"))
-            save_file(os.path.join(save_dir, 'output.obj'), synapse.out_obj, False)
-            save_file(os.path.join(save_dir, 'output.mtl'), synapse.out_mtl, False)
-            save_file(os.path.join(save_dir, 'output.png'), decode_base64(synapse.out_texture, "texture"))
+            save_file(os.path.join(save_dir, 'output.glb'), decode_base64(synapse.out_glb, "glb"))
         except Exception as e:
             print(f"Error saving synapse files: {e}")

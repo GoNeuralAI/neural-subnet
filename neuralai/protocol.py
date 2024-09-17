@@ -22,22 +22,10 @@ class NATextSynapse(bt.Synapse):
         description="Based64 encoded preview image"
     )
     # output obj, supported format is .obj
-    out_obj: str = pydantic.Field(
-        default="obj",
+    out_glb: str = pydantic.Field(
+        default="glb",
         title="3d Object",
         description="3d object file"
-    )
-    # output texture, supported format is .png
-    out_texture: str = pydantic.Field(
-        default="texture",
-        title="Texture Image",
-        description="Based64 encoded Texture image"
-    )
-    # output mtl file supported format is .mtl
-    out_mtl: str = pydantic.Field(
-        default="mtl",
-        title="Material file",
-        description="3d Material file"
     )
     # Query response timeout
     timeout: int = pydantic.Field(
