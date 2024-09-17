@@ -113,6 +113,11 @@ async def validate(data: ValidateRequest) -> ValidateResponse:
         S0 = compute_clip_similarity_prompt(prompt, preview_image_path)
 
         print(f"similarity: {S0}")
+        
+        if S0 < 0.25:
+            return ValidateResponse(
+                score=0
+            )
 
         Si = [compute_clip_similarity(preview_image, img) for img in rendered_images]
         print(f"similarities: {Si}")

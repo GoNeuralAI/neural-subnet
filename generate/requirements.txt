@@ -10,16 +10,13 @@ Pillow
 scipy
 psutil
 
-#non essential dependencies:
 kornia>=0.7.1
 spandrel
 soundfile
 
-# base
 cmake
 ninja
 
-# computational libraries
 numpy
 scipy
 opencv-python
@@ -29,28 +26,23 @@ nerfacc>=0.5.3
 PyMCubes
 scikit-learn
 
-# for use ML models
 diffusers>=0.26.1
 transformers>=4.36.2
 open_clip_torch
 
-# for training differentiable tensors
 torchmetrics
 pytorch_msssim
 
-# for process images & videos
 imageio
 imageio-ffmpeg
 matplotlib
 
-# for dmtet and mesh import & export
 trimesh
 plyfile
 pygltflib
 xatlas
 pymeshlab
 
-# configs & extra
 torchtyping
 tqdm
 jaxtyping

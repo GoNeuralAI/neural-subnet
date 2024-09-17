@@ -25,12 +25,13 @@ class Validator(BaseValidatorNeuron):
     def __init__(self, config=None):
         super(Validator, self).__init__(config=config)
         
+        bt.logging.info("load_state()")
+        self.load_state()
         self.task_manager = TaskManager()
         self.miner_manager = MinerManager(validator=self)
         self.wandb_manager = WandbManager(validator=self)
 
-        bt.logging.info("load_state()")
-        self.load_state()
+        bt.logging.info(self.scores)
 
         # TODO(developer): Anything specific to your use case you can do here
 
@@ -43,7 +44,6 @@ class Validator(BaseValidatorNeuron):
         - Rewarding the miners
         - Updating the scores
         """
-        
         return await forward(self, synapse)
     
     async def forward_fn(self, synapse: NATextSynapse=None):

@@ -28,7 +28,6 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     gen_time = loop_time * 4 / 5
     scores = []
     
-    
     # wandb
     today = datetime.date.today()
     if self.wandb_manager.wandb_start != today:
@@ -109,5 +108,5 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     taken_time = time.time() - start_time
     
     if taken_time < loop_time:
-        bt.logging.info(f"== Taken time: {taken_time} | Sleeping for {loop_time - taken_time} seconds ==")
+        bt.logging.info(f"== Taken time: {taken_time:.1f}s | Sleeping for {loop_time - taken_time:.1f}s ==")
         time.sleep(loop_time - taken_time)

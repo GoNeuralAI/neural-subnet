@@ -24,6 +24,8 @@ import asyncio
 import argparse
 import threading
 import bittensor as bt
+import math
+from collections import Counter
 
 from typing import List, Union
 from traceback import print_exception
@@ -61,6 +63,9 @@ class BaseValidatorNeuron(BaseNeuron):
 
         # Set up initial scoring weights for validation
         bt.logging.info("Building validation weights.")
+        self.base_scores = np.zeros(
+            self.metagraph.n, dtype=np.float32
+        )
         self.scores = np.zeros(
             self.metagraph.n, dtype=np.float32
         )
@@ -231,6 +236,28 @@ class BaseValidatorNeuron(BaseNeuron):
         """
         Sets the validator weights to the metagraph hotkeys based on the scores it has received from the miners. The weights determine the trust and incentive level the validator assigns to miner nodes on the network.
         """
+        # Create a list of (id, score) pairs
+        bt.logging.info(f"base_scores: {self.base_scores}")
+        id_score_pairs = list(enumerate(self.base_scores))
+        
+        sorted_pairs = sorted(id_score_pairs, key=lambda x: x[1], reverse=True)
+        
+        # Calculate ranks (handling ties)
+        ranks = []
+        current_rank = 1
+        previous_score = None
+        for i, (id, score) in enumerate(sorted_pairs):
+            if score != previous_score:
+                current_rank = i + 1
+            ranks.append((id, current_rank, score))
+            previous_score = score
+        
+        # Sort back to original order
+        ranks.sort(key=lambda x: x[0])
+        
+        self.scores = [(math.exp(-0.015 * rank) if score > 0 else 0) for id, rank, score in ranks]
+        
+        bt.logging.info(f"scores: {self.scores}")
 
         # Check if self.scores contains any NaN values and log a warning if it does.
         if np.isnan(self.scores).any():
@@ -293,7 +320,7 @@ class BaseValidatorNeuron(BaseNeuron):
 
     def resync_metagraph(self):
         """Resyncs the metagraph and updates the hotkeys and moving averages based on the new metagraph."""
-        bt.logging.info("resync_metagraph()")
+        bt.logging.info("resync_metagraph()1111")
 
         # Copies state of metagraph before syncing.
         previous_metagraph = copy.deepcopy(self.metagraph)
@@ -356,17 +383,17 @@ class BaseValidatorNeuron(BaseNeuron):
 
         # Compute forward pass rewards, assumes uids are mutually exclusive.
         # shape: [ metagraph.n ]
-        scattered_rewards: np.ndarray = np.zeros_like(self.scores)
+        scattered_rewards: np.ndarray = np.zeros_like(self.base_scores)
         scattered_rewards[uids_array] = rewards
         bt.logging.debug(f"Scattered rewards: {rewards}")
 
-        # Update scores with rewards produced by this step.
+        # Update base_scores with rewards produced by this step.
         # shape: [ metagraph.n ]
         alpha: float = self.config.neuron.moving_average_alpha
-        self.scores: np.ndarray = alpha * scattered_rewards + (
+        self.base_scores: np.ndarray = alpha * scattered_rewards + (
             1 - alpha
-        ) * self.scores
-        bt.logging.debug(f"Updated moving avg scores: {self.scores}")
+        ) * self.base_scores
+        bt.logging.debug(f"Updated moving avg base_scores: {self.base_scores}")
 
     def save_state(self):
         """Saves the state of the validator to a file."""
@@ -376,16 +403,16 @@ class BaseValidatorNeuron(BaseNeuron):
         np.savez(
             self.config.neuron.full_path + "/state.npz",
             step=self.step,
-            scores=self.scores,
+            scores=self.base_scores,
             hotkeys=self.hotkeys,
         )
 
     def load_state(self):
         """Loads the state of the validator from a file."""
-        bt.logging.info("Loading validator state.")
 
         # Load the state of the validator from file.
         state = np.load(self.config.neuron.full_path + "/state.npz")
+        bt.logging.info(f"Loading validator state.{state['scores']}")
         self.step = state["step"]
-        self.scores = state["scores"]
+        self.base_scores = state["scores"]
         self.hotkeys = state["hotkeys"]
