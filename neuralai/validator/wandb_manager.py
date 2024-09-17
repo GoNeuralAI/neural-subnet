@@ -10,7 +10,7 @@ load_dotenv()
 class WandbManager:
     def __init__(self, validator=None):
         self.wandb = None
-        self.wandb_start = None
+        self.wandb_start = datetime.date.today()
         self.validator = validator
         
         if not self.validator.config.wandb.off:
@@ -33,7 +33,7 @@ class WandbManager:
         self.wandb = wandb.init(
             anonymous="allow",
             name=name,
-            project="vivid",
+            project="great",
             entity="creativity111",
             config={
                 "uid":self.validator.uid,

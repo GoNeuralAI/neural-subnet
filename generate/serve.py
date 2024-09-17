@@ -45,7 +45,7 @@ parser.add_argument('--scale', type=float, default=1.0, help='Scale of generated
 parser.add_argument('--distance', type=float, default=4.5, help='Render distance.')
 parser.add_argument('--view', type=int, default=6, choices=[4, 6], help='Number of input views.')
 parser.add_argument('--no_rembg', action='store_true', help='Do not remove input background.')
-parser.add_argument('--export_texmap', action='store_true', help='Export a mesh with texture map.')
+parser.add_argument('--export_texmap', default=True, action='store_true', help='Export a mesh with texture map.')
 parser.add_argument('--save_video', action='store_true', help='Save a circular-view video.')
 args = parser.parse_args()
 seed_everything(args.seed)

@@ -100,9 +100,9 @@ def render_mesh(obj_file: str, distance: float = 1.5, elevation: float = 20.0, a
             alpha = alpha.unsqueeze(0).expand_as(image)  # Match the shape of the image
             image = image * alpha + black_background * (1 - alpha)
             
-            image_filename = os.path.join(OUTPUT_DIR, f'image_{angle}.png')
-            save_image(image, image_filename)  # Save image
-            print(f'Saved image to {image_filename}')
+            # image_filename = os.path.join(OUTPUT_DIR, f'image_{angle}.png')
+            # save_image(image, image_filename)  # Save image
+            # print(f'Saved image to {image_filename}')
             
             ndarr = image.mul(255).clamp(0, 255).byte().numpy().transpose(1, 2, 0)  # Convert to [H, W, C]
             pil_image = Image.fromarray(ndarr)
@@ -128,7 +128,7 @@ async def render(
     print(f"promt_image: {prompt_image} : id={id}")
     
     # Use the uploaded objective file for rendering
-    obj_file = os.path.join(DATA_DIR, f"{id}/output.obj")
+    obj_file = os.path.join(DATA_DIR, f"{id}/output.glb")
 
     # Print the file size
     image_files = render_mesh(obj_file)

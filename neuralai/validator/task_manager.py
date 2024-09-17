@@ -3,7 +3,7 @@ import random
 from neuralai.utils.taskLib import taskLib
 
 class TaskManager:
-    verbose = False  # False : test | True: main
+    verbose = True  # False : test | True: main
     
     def __init__(self):
         super(TaskManager, self).__init__()
@@ -16,7 +16,7 @@ class TaskManager:
             prompts = await self.get_task()
         else:
             prompts = [
-                "Three-quarter view Kettle, Psychedelic. Defined edge highlights for form clarity. Solid light gray background.",
+                # "Three-quarter view Kettle, Psychedelic. Defined edge highlights for form clarity. Solid light gray background.",
                 # "Bird in flight",
                 # "Fish swimming in the sea",
                 # "Butterfly fluttering through the garden",

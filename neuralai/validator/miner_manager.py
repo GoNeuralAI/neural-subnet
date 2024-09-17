@@ -16,12 +16,10 @@ class MinerManager:
             deserialize=False,
             timeout=10
         )
+
         responses = {
             uid: response.status
             for uid, response in zip(uids, responses)
         }
         availables = [uid for uid, status in responses.items() if status == 'idle']
         return availables
-    
-    def set_initial_rewards():
-        bt.logging.debug("Set Rewards")
