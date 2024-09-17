@@ -7,3 +7,4 @@ torchvision
 fastapi
 uvicorn
 transformers
+trimesh

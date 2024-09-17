@@ -76,6 +76,7 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
                 bt.logging.info(f"Miner Response Received")
                 
                 for index, response in enumerate(responses):
+                    bt.logging.info(response.out_glb)
                     try:
                         utils.save_synapse_files(response, forward_uids[index])
                     except ValueError as e:

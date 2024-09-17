@@ -1,0 +1,56 @@
+{
+  "os":  "Linux-5.15.0-101-generic-x86_64-with-glibc2.35",
+  "python":  "3.10.12",
+  "startedAt":  "2024-09-17T11:55:05.417143Z",
+  "args":  [
+    "--netuid",
+    "182",
+    "--subtensor.network",
+    "test",
+    "--wallet.name",
+    "validator",
+    "--wallet.hotkey",
+    "default",
+    "--axon.port",
+    "51579",
+    "--logging.debug"
+  ],
+  "program":  "/workspace/neural-subnet/neurons/validator.py",
+  "codePath":  "neurons/validator.py",
+  "git":  {
+    "remote":  "https://github.com/GoNeuralAI/neural-subnet/",
+    "commit":  "30c160db9616694b08209938e19b94b5476fb7e4"
+  },
+  "email":  "dusandev119@gmail.com",
+  "root":  "/workspace/neural-subnet",
+  "host":  "be22e535b6a3",
+  "username":  "root",
+  "executable":  "/usr/bin/python3",
+  "codePathLocal":  "neurons/validator.py",
+  "cpu_count":  64,
+  "cpu_count_logical":  128,
+  "gpu":  "[NVIDIA GeForce RTX 4090]",
+  "gpu_count":  1,
+  "disk":  {
+    "/":  {
+      "total":  "214748364800",
+      "used":  "12003033088"
+    }
+  },
+  "memory":  {
+    "total":  "540670988288"
+  },
+  "cpu":  {
+    "count":  64,
+    "countLogical":  128
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "NVIDIA GeForce RTX 4090",
+      "memoryTotal":  "25757220864",
+      "cudaCores":  16384,
+      "architecture":  "Ada"
+    }
+  ],
+  "cudaVersion":  "12.2"
+}
