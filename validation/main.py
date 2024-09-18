@@ -17,8 +17,8 @@ import numpy as np
 from pytorch3d.structures import Meshes
 from fastapi import  HTTPException
 from torchvision import transforms
-from fastapi.responses import FileResponse
 from pytorch3d.renderer import TexturesUV
+from pytorch3d.renderer import TexturesVertex
 
 DATA_DIR = './results'
 OUTPUT_DIR = './output_images'
@@ -137,7 +137,7 @@ def render_mesh(obj_file: str, distance: float = 1.5, elevation: float = 20.0, a
             
             image_filename = os.path.join(OUTPUT_DIR, f'image_{angle}.png')
             save_image(image, image_filename)  # Save image
-            # print(f'Saved image to {image_filename}')
+            print(f'Saved image to {image_filename}')
             
             ndarr = image.mul(255).clamp(0, 255).byte().numpy().transpose(1, 2, 0)  # Convert to [H, W, C]
             pil_image = Image.fromarray(ndarr)
@@ -156,7 +156,7 @@ def render_mesh(obj_file: str, distance: float = 1.5, elevation: float = 20.0, a
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-async def render(
+def render(
     prompt_image: str,
     id: int = 1
 ):
@@ -173,3 +173,6 @@ async def render(
         raise HTTPException(status_code=500, detail="Rendering failed")
     
     return image_files
+
+if __name__ == "__main__":
+    render("abc", 6)

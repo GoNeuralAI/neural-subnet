@@ -77,6 +77,7 @@ async def generate(self, synapse: bt.Synapse) -> bt.Synapse:
                 synapse.out_glb = base64.b64encode(read_file(paths["glb"])).decode('utf-8')
                 synapse.s3_addr = []
             else:
+                bt.logging.info("Uploading to S3bucket")
                 for key, path in paths.items():
                     file_name = os.path.basename(path)
                     s3_upload(path, f"{self.generation_requests}/{file_name}")

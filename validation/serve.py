@@ -13,12 +13,9 @@ from pytorch3d.renderer import (
     MeshRenderer, MeshRasterizer, RasterizationSettings,
     HardPhongShader, PointLights, PerspectiveCameras
 )
-from pytorch3d.renderer import look_at_view_transform
-from torchvision.utils import save_image
 from skimage.metrics import structural_similarity as ssim
 import numpy as np
-from fastapi import FastAPI, HTTPException, File, UploadFile, Form
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException, File, Form
 from transformers import CLIPProcessor, CLIPModel
 from models import ValidateRequest, ValidateResponse
 from rendering import render, load_image
@@ -68,7 +65,6 @@ def compute_clip_similarity(image1, image2):
 
 def compute_clip_similarity_prompt(text, image_path):
     global clip_model, processor
-    print("successfully imported")
     # Preprocess the inputs
     image = Image.open(image_path)  # Change to your image path        
     image_inputs = processor(images=image, return_tensors="pt")
@@ -99,20 +95,16 @@ async def validate(data: ValidateRequest) -> ValidateResponse:
     start_time = time.time()
     try:
         rendered_images, before_images = await render(prompt_image=prompt, id=uid)
-        print(f"render time: {time.time() - start_time}")
+        # print(f"render time: {time.time() - start_time}")
         preview_image_path = os.path.join(DATA_DIR, f"{uid}/preview.png")
 
-        # Load all rendered images
-        
         preview_image = load_image(preview_image_path)
-        print(f"load model time: {time.time() - start_time}")
+        # print(f"load model time: {time.time() - start_time}")
 
-        # Function to compute similarity using CLIP
-        
-        
         S0 = compute_clip_similarity_prompt(prompt, preview_image_path)
-
-        print(f"similarity: {S0}")
+        ES0 = compute_clip_similarity_prompt(prompt, before_images[0])
+        print(f"----- S0 similarity: {S0}")
+        print(f"***** ES0 similarity: {ES0}")
         
         if S0 < 0.25:
             return ValidateResponse(
@@ -120,10 +112,15 @@ async def validate(data: ValidateRequest) -> ValidateResponse:
             )
 
         Si = [compute_clip_similarity(preview_image, img) for img in rendered_images]
-        print(f"similarities: {Si}")
+        
+        
+        Ri = [compute_clip_similarity_prompt(prompt, before_image) for before_image in before_images]
+        
+        
+        ESi = [compute_clip_similarity(rendered_images[0], img) for img in rendered_images]
+        
         
         print(f"S calc time: {time.time() - start_time}")
-        
         
         if rendered_images and before_images:
             # Q0 = calculate_image_entropy(Image.open(preview_image_path))
@@ -132,19 +129,38 @@ async def validate(data: ValidateRequest) -> ValidateResponse:
             # Q0 = 0  # No comparison available, set to 0 or an appropriate value indicating no data
             Qi = []
             
-        # print(f"Q0: {Q0}")
         print(f"Qi: {Qi}")
-        
         print(f"Qi time: {time.time() - start_time}")
-        
+        epsilon = 1e-10
+        Qi_array = np.array(Qi)
+        Qi_with_epsilon = Qi_array + epsilon
 
         S_geo = np.exp(np.log(Si).mean())
-        Q_geo = np.exp(np.log(Qi).mean())
+        R_geo = np.exp(np.log(Ri).mean())
+        ES_geo = np.exp(np.log(ESi).mean())
+        Q_geo = np.exp(np.log(Qi_with_epsilon).mean())
+        
+        print("--------- Rendered images similarities with preview image --------")
+        print(Si)
+        print(f"S_geo: {S_geo}")
+        
+        print("********* Rendered images similarities with first rendered image **********")
+        print(ESi)
+        print(f"ES_geo: {ES_geo}")
+        
+        print("--------- Rendered images similarities with text prompt ---------")
+        print(Ri)
+        print(f"R_geo: {R_geo}")
+        
 
         # Total Similarity Score (Stotal)
-        S_total = S0 * 0.3 + S_geo * 0.5 + Q_geo * 0.2
+        S_total = S0 * 0.25 + S_geo * 0.3 + R_geo * 0.35 + Q_geo * 0.1
+        
+        # Exploit Total Similarity Score (Stotal)
+        ES_total = S0 * 0.25 + ES_geo * 0.3 + R_geo * 0.35 + Q_geo * 0.1
 
-        print(S_total)
+        print(f"S_total: {S_total}")
+        print(f"ES_total: {ES_total}")
 
         return ValidateResponse(
             score=S_total

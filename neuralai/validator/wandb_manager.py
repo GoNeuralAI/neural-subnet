@@ -43,4 +43,4 @@ class WandbManager:
             }
         )
         
-        bt.logging.debug(f"Init a new Wandb: {name}")
+        bt.logging.info(f"Init a new Wandb: {name}")
