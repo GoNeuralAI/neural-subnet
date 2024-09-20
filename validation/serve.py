@@ -19,6 +19,7 @@ from fastapi import FastAPI, HTTPException, File, Form
 from transformers import CLIPProcessor, CLIPModel
 from models import ValidateRequest, ValidateResponse
 from rendering import render, load_image
+import open_clip
 
 app = FastAPI()
 
@@ -26,8 +27,9 @@ app = FastAPI()
 device = "cuda" if torch.cuda.is_available() else "cpu"
 try:
     model, preprocess = clip.load("ViT-B/32", device=device)
-    clip_model = CLIPModel.from_pretrained('openai/clip-vit-base-patch32')
-    processor = CLIPProcessor.from_pretrained('openai/clip-vit-base-patch32')
+    open_model, _, open_preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
+    open_model.eval()  # model in train mode by default, impacts some models with BatchNorm or stochastic depth active
+    tokenizer = open_clip.get_tokenizer('ViT-B-32')
 except Exception as e:
     print("load model error")
 
@@ -63,23 +65,23 @@ def compute_clip_similarity(image1, image2):
         similarity = torch.nn.functional.cosine_similarity(image1_features, image2_features).item()
     return similarity
 
-def compute_clip_similarity_prompt(text, image_path):
-    global clip_model, processor
+def compute_clip_similarity_prompt(text_prompt, image_path):
+    global open_model, open_preprocess
     # Preprocess the inputs
-    image = Image.open(image_path)  # Change to your image path        
-    image_inputs = processor(images=image, return_tensors="pt")
-    text_inputs = processor(text=text, return_tensors="pt", truncation=True)
+    image = Image.open(image_path)  # Change to your image path
+    image = open_preprocess(image).unsqueeze(0)
     
-    # Get the embeddings
-    image_embeddings = clip_model.get_image_features(**image_inputs)
-    text_embeddings = clip_model.get_text_features(**text_inputs)
+    labels_list = [text_prompt]
+    text = tokenizer(labels_list)
     
-    # Normalize the embeddings to unit length
-    image_embeddings = image_embeddings / image_embeddings.norm(dim=1, keepdim=True)
-    text_embeddings = text_embeddings / text_embeddings.norm(dim=1, keepdim=True)
-    with torch.no_grad():
-        similarity = torch.nn.functional.cosine_similarity(text_embeddings, image_embeddings).item()
-    return similarity
+    with torch.no_grad(), torch.cuda.amp.autocast():
+        image_features = open_model.encode_image(image)
+        text_features = open_model.encode_text(text)
+        image_features /= image_features.norm(dim=-1, keepdim=True)
+        text_features /= text_features.norm(dim=-1, keepdim=True)
+        text_probs = (image_features @ text_features.T)
+
+    return text_probs.item()
 
 args, _ = get_args()
 
@@ -154,10 +156,10 @@ async def validate(data: ValidateRequest) -> ValidateResponse:
         
 
         # Total Similarity Score (Stotal)
-        S_total = S0 * 0.25 + S_geo * 0.3 + R_geo * 0.35 + Q_geo * 0.1
+        S_total = S0 * 0.25 + S_geo * 0.3 + R_geo * 0.35
         
         # Exploit Total Similarity Score (Stotal)
-        ES_total = S0 * 0.25 + ES_geo * 0.3 + R_geo * 0.35 + Q_geo * 0.1
+        ES_total = S0 * 0.25 + ES_geo * 0.3 + R_geo * 0.35
 
         print(f"S_total: {S_total}")
         print(f"ES_total: {ES_total}")

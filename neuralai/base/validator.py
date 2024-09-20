@@ -392,7 +392,6 @@ class BaseValidatorNeuron(BaseNeuron):
         alpha: float = self.config.neuron.moving_average_alpha
         for i in range(len(self.base_scores)):
             self.base_scores[i] = alpha * scattered_rewards[i] + (1 - alpha) * self.base_scores[i]
-            bt.logging.debug(f"scores are: {self.base_scores[i]}")
         bt.logging.debug(f"Updated moving avg base_scores: {self.base_scores}")
 
     def save_state(self):
@@ -400,6 +399,7 @@ class BaseValidatorNeuron(BaseNeuron):
         bt.logging.info("Saving validator state.")
 
         # Save the state of the validator to file.
+        self.base_scores = np.where(self.base_scores < 1e-6, 0, self.base_scores)
         np.savez(
             self.config.neuron.full_path + "/state.npz",
             step=self.step,

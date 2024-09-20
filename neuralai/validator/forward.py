@@ -73,7 +73,7 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
                     # You are encouraged to define your own deserialization function.
                     deserialize=False,
                 )
-                bt.logging.info(f"Miner Response Received")
+                bt.logging.info(f"Miner response received")
                 
                 for index, response in enumerate(responses):
                     try:
