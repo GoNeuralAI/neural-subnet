@@ -32,8 +32,8 @@ class WandbManager:
         self.wandb = wandb.init(
             anonymous="allow",
             name=name,
-            project="great",
-            entity="creativity111",
+            project="",
+            entity="",
             config={
                 "uid":self.validator.uid,
                 "hotkey":self.validator.wallet.hotkey.ss58_address,
