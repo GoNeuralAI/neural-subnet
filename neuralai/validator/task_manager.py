@@ -3,7 +3,7 @@ import random
 from neuralai.utils.taskLib import taskLib
 
 class TaskManager:
-    verbose = True  # False : test | True: main
+    verbose = False  # False : test | True: main
     
     def __init__(self):
         super(TaskManager, self).__init__()
@@ -16,28 +16,16 @@ class TaskManager:
             prompts = await self.get_task()
         else:
             prompts = [
-                # "Three-quarter view Kettle, Psychedelic. Defined edge highlights for form clarity. Solid light gray background.",
-                # "Bird in flight",
-                # "Fish swimming in the sea",
-                # "Butterfly fluttering through the garden",
-                # "Dog chasing after a ball",
-                # "Squirrel scurrying up the tree",
-                # "Hummingbird hovering near the flowers",
-                # "Frog leaping across the pond",
-                # "Wind howling through the trees",
-                # "Waves crashing against the shore",
-                # "Ant marching across the ground",
-                # "Rabbit bounding through the meadow",
-                # "Dragonfly darting between the reeds",
-                # "Cat prowling along the fence",
-                # "Dandelion seeds drifting on the breeze",
-                # "Fireflies glowing in the night",
-                # "Deer gracefully bounding through the forest",
-                # "Swarm of bees buzzing around the hive",
-                # "Dolphin leaping out of the water",
-                # "Falling leaves drifting to the ground",
-                # "Tumbleweed rolling across the desert",
-                # "The car should have a sleek, aerodynamic design."
+                "Three-quarter view Kettle",
+                "Shark with teeth",
+                "Toilet",
+                "Soccer Ball",
+                "donut with icing",
+                "moon",
+                "red diamond",
+                "Diagonal view Chair",
+                "Washing machine",
+                "magic car"
             ]
             
         task = random.choice(prompts)

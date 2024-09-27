@@ -58,8 +58,11 @@ async def generate(self, synapse: bt.Synapse) -> bt.Synapse:
     timeout = synapse.timeout
     prompt = synapse.prompt_text
     
+    extra_prompts = "Angled front view, solid color background, 3d model, high quality"
+    enhanced_prompt = f"{prompt}, {extra_prompts}"
+    
     if type(synapse).__name__ == "NATextSynapse":
-        result = await _generate_from_text(gen_url=url, timeout=timeout, prompt=prompt)
+        result = await _generate_from_text(gen_url=url, timeout=timeout, prompt=enhanced_prompt)
 
         if not result or not result.get('success'):
             bt.logging.warning("Result is None")
@@ -77,6 +80,7 @@ async def generate(self, synapse: bt.Synapse) -> bt.Synapse:
                 synapse.out_glb = base64.b64encode(read_file(paths["glb"])).decode('utf-8')
                 synapse.s3_addr = []
             else:
+                bt.logging.info("Uploading to S3bucket")
                 for key, path in paths.items():
                     file_name = os.path.basename(path)
                     s3_upload(path, f"{self.generation_requests}/{file_name}")

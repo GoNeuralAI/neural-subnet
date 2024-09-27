@@ -28,10 +28,10 @@ def get_rewards(responses: List,  all_uids: List,  for_uids: List) -> np.ndarray
     # Remove any None values
     # responses = [response for response in responses if response.out_obj is not "obj"]
     return np.array(
-        [responses[for_uids.index(uid)]['score'] if uid in for_uids else 0 for uid in all_uids]
+        [responses[for_uids.index(uid)] if uid in for_uids else 0 for uid in all_uids]
     )
 
-def calculate_scores(rewards):
+def normalize(rewards):
     """
     Normalize the rewards to a range of [0, 1] and apply the transformation y = x^2.
     
@@ -41,8 +41,6 @@ def calculate_scores(rewards):
     Returns:
         list: A list of transformed scores.
     """
-    scores = []
-        
     if len(rewards) == 0:
         return []
     

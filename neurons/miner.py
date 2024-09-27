@@ -32,7 +32,7 @@ class Miner(BaseMinerNeuron):
             bt.logging.warning("Couldn't perform the Generation right now.")
             return synapse
         
-        bt.logging.debug(f"====== 3D Generation Started: {synapse.prompt_text} ======")
+        bt.logging.info(f"====== 3D Generation Started: {synapse.prompt_text} ======")
         
         set_status(self, "generation")
         #send gpu id as a parameter for multi gpu
@@ -42,7 +42,7 @@ class Miner(BaseMinerNeuron):
         if self.generation_requests < self.config.miner.concurrent_limit:
             set_status(self)
             
-        bt.logging.debug(f"====== 3D Generation Ended ======")
+        bt.logging.info(f"====== 3D Generation Ended ======")
         
         return synapse
     

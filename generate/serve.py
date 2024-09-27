@@ -217,15 +217,18 @@ async def _generate_mesh(input_images):
         # Generate texture map
         if args.export_texmap:
             vertices, faces, uvs, mesh_tex_idx, tex_map = mesh_out
-            save_obj_with_mtl(
-                vertices.data.cpu().numpy(),
-                uvs.data.cpu().numpy(),
-                faces.data.cpu().numpy(),
-                mesh_tex_idx.data.cpu().numpy(),
-                tex_map.permute(1, 2, 0).data.cpu().numpy(),
-                mesh_path_idx,
-            )
-            convert_obj_to_glb(mesh_path_idx, mesh_path_glb)
+            try:
+                save_obj_with_mtl(
+                    vertices.data.cpu().numpy(),
+                    uvs.data.cpu().numpy(),
+                    faces.data.cpu().numpy(),
+                    mesh_tex_idx.data.cpu().numpy(),
+                    tex_map.permute(1, 2, 0).data.cpu().numpy(),
+                    mesh_path_idx,
+                )
+                convert_obj_to_glb(mesh_path_idx, mesh_path_glb)
+            except Exception as e:
+                return str(e)
         else:
             vertices, faces, vertex_colors = mesh_out
             save_obj(vertices, faces, vertex_colors, mesh_path_idx)

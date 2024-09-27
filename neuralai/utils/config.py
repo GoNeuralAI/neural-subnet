@@ -171,7 +171,7 @@ def add_miner_args(cls, parser):
         "--miner.gen_interval",
         type=int,
         help="The interval to limit the number of requests",
-        default=100,
+        default=300,
     )
 
 def add_validator_args(cls, parser):
@@ -188,7 +188,7 @@ def add_validator_args(cls, parser):
         "--neuron.task_period",
         type=float,
         help="The timeout for each forward call in seconds.",
-        default=100,
+        default=300,
     )
 
     parser.add_argument(
@@ -233,7 +233,7 @@ def add_validator_args(cls, parser):
         "--neuron.vpermit_tao_limit",
         type=int,
         help="The maximum number of TAO allowed to query a validator with a vpermit.",
-        default=10,
+        default=4096,
     )
 
     parser.add_argument(
@@ -254,14 +254,7 @@ def add_validator_args(cls, parser):
         "--neuron.challenge_count",
         type=int,
         help="The miner challenge count at once",
-        default=15,
-    )
-    
-    parser.add_argument(
-        "--generation.timeout",
-        type=int,
-        help="Miner 3D Generation Time",
-        default=100
+        default=20,
     )
 
 def config(cls):
