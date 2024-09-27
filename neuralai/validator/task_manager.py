@@ -3,7 +3,7 @@ import random
 from neuralai.utils.taskLib import taskLib
 
 class TaskManager:
-    verbose = False  # False : test | True: main
+    verbose = True  # False : test | True: main
     
     def __init__(self):
         super(TaskManager, self).__init__()
