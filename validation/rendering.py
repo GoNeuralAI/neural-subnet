@@ -1,11 +1,8 @@
 import os
 import io
 import torch
-from pydantic import BaseModel
 from PIL import Image 
-import cv2
 import trimesh
-from pytorch3d.io import load_objs_as_meshes
 from pytorch3d.renderer import (
     MeshRenderer, MeshRasterizer, RasterizationSettings,
     HardPhongShader, PointLights, PerspectiveCameras
@@ -17,11 +14,11 @@ import numpy as np
 from pytorch3d.structures import Meshes
 from fastapi import  HTTPException
 from torchvision import transforms
-from fastapi.responses import FileResponse
 from pytorch3d.renderer import TexturesUV
 
 DATA_DIR = './results'
 OUTPUT_DIR = './output_images'
+
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
@@ -64,12 +61,13 @@ def load_image(image_buffer):
     preprocess = transforms.Compose([
         transforms.Resize((224, 224)),  # Resize the image to match the input size expected by the model
         transforms.ToTensor(),          # Convert the image to a tensor
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalize the image
+        transforms.Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711]),
+        # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalize the image
     ])
     return preprocess(image).unsqueeze(0).to(device)
 
 
-def render_mesh(obj_file: str, distance: float = 1.5, elevation: float = 20.0, azimuth: float = 0.0, 
+def render_mesh(obj_file: str, distance: float = 1.5, elevation: float = 15, azimuth: float = 0.0, 
                 image_size: int = 512, angle_step: int = 24):
     render_images = []
     before_render = []
@@ -128,16 +126,18 @@ def render_mesh(obj_file: str, distance: float = 1.5, elevation: float = 20.0, a
             image = (image - image.min()) / (image.max() - image.min())
             
             # Create a black background
-            black_background = torch.zeros_like(image)
+            height, width = image.shape[1], image.shape[2]
+            gradient_background = torch.linspace(0, 1, steps=height).unsqueeze(1).expand(height, width)
+            gradient_background = gradient_background.unsqueeze(0).expand_as(image)
             
             # Composite the image with the black background
             alpha = images[0, ..., 3].cpu().detach()  # Extract the alpha channel
             alpha = alpha.unsqueeze(0).expand_as(image)  # Match the shape of the image
-            image = image * alpha + black_background * (1 - alpha)
+            image = image * alpha + gradient_background * (1 - alpha)
             
             image_filename = os.path.join(OUTPUT_DIR, f'image_{angle}.png')
             save_image(image, image_filename)  # Save image
-            # print(f'Saved image to {image_filename}')
+            print(f'Saved image to {image_filename}')
             
             ndarr = image.mul(255).clamp(0, 255).byte().numpy().transpose(1, 2, 0)  # Convert to [H, W, C]
             pil_image = Image.fromarray(ndarr)
@@ -156,11 +156,11 @@ def render_mesh(obj_file: str, distance: float = 1.5, elevation: float = 20.0, a
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-async def render(
-    prompt_image: str,
+def render(
+    prompt: str,
     id: int = 1
 ):
-    print(f"promt_image: {prompt_image} : id={id}")
+    print(f"prompt: {prompt} : id={id}")
     
     # Use the uploaded objective file for rendering
     obj_file = os.path.join(DATA_DIR, f"{id}/output.glb")

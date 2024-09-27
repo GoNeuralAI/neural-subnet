@@ -1,65 +1,60 @@
-import cv2
-import numpy as np
-from skimage import exposure, img_as_float
+# import torch
+# import torchvision.transforms as transforms
+# from PIL import Image
+# import time
+# import numpy as np
 
-def assess_image_quality(image_path):
-    # Load image
-    image = cv2.imread(image_path)
-    if image is None:
-        print("Error: Image not found.")
-        return
+# # # Set the device
+# # device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
 
-    # Convert to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+# # # Load the q_model
+# # q_model = torch.hub.load(repo_or_dir="miccunifi/QualiCLIP", source="github", model="QualiCLIP")
+# # q_model.eval().to(device)
 
-    # Assess sharpness using the Laplacian method
-    laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
-    print(f"Sharpness (Laplacian variance): {laplacian_var}")
+# # # Define the preprocessing pipeline
+# # preprocess = transforms.Compose([
+# #     transforms.Resize((224, 224)),
+# #     transforms.ToTensor(),
+# #     transforms.Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711]),
+# # ])
 
-    # Assess color accuracy (simple mean of pixel values as a placeholder)
-    mean_color = cv2.mean(image)[:3]  # BGR
-    color_accuracy_score = np.mean(mean_color)
-    print(f"Mean Color (BGR): {mean_color} (Score: {color_accuracy_score})")
+# # start = time.time()
+# # # Load the image
+# # img_path = "origin.jpg"
+# # img = Image.open(img_path).convert("RGB")
 
-    # Assess contrast
-    contrast = np.std(gray)
-    print(f"Contrast (standard deviation): {contrast}")
+# # # Preprocess the image
+# # img = preprocess(img).unsqueeze(0).to(device)
+# # img = img.to(device)
 
-    # Assess noise (simple standard deviation of pixel values as a placeholder)
-    noise = np.std(image)
-    print(f"Noise (standard deviation): {noise}")
+# # # Compute the quality score
+# # with torch.no_grad(), torch.cuda.amp.autocast():
+# #     score = q_model(img)
 
-    # Assess lighting (using histogram equalization)
-    img_float = img_as_float(gray)
-    eq_img = exposure.equalize_hist(img_float)
-    lighting_quality = np.mean(eq_img)
-    print(f"Lighting quality (mean of equalized histogram): {lighting_quality}")
+# # print(f"Image quality score: {score.item()}")
 
-    # Weights for each factor
-    weights = {
-        'sharpness': 0.25,
-        'color_accuracy': 0.25,
-        'contrast': 0.25,
-        'noise': 0.15,
-        'lighting': 0.1
-    }
+# # img_path = "output_images/image_0.png"
+# # img = Image.open(img_path).convert("RGB")
 
-    # Calculate weighted score
-    weighted_score = (
-        weights['sharpness'] * laplacian_var +
-        weights['color_accuracy'] * color_accuracy_score +
-        weights['contrast'] * contrast +
-        weights['noise'] * (1 / (noise + 1e-5)) +  # Inverse because less noise is better
-        weights['lighting'] * lighting_quality
-    )
+# # # Preprocess the image
+# # img = preprocess(img).unsqueeze(0).to(device)
 
-    print(f"Overall Quality Score: {weighted_score}")
+# # # Compute the quality score
+# # with torch.no_grad(), torch.cuda.amp.autocast():
+# #     score = q_model(img)
 
-    # Display the image (optional)
-    cv2.imshow("Image", image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+# # print(f"Image quality score: {score.item()}")
 
-# Example usage
-# Example usage
-assess_image_quality("output_images/preview.png")
+# # img_path = "origin-2.png"
+# # img = Image.open(img_path).convert("RGB")
+
+# # # Preprocess the image
+# # img = preprocess(img).unsqueeze(0).to(device)
+
+# # # Compute the quality score
+# # with torch.no_grad(), torch.cuda.amp.autocast():
+# #     score = q_model(img)
+
+# # print(f"Image quality score: {score.item()}")
+
+# # print(time.time() - start)

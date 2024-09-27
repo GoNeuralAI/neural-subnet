@@ -20,7 +20,6 @@ class WandbManager:
                 "Running validators without Wandb. Recommend to add Wandb!"
             )
             
-            
     def init_wandb(self):
         bt.logging.debug("Init wandb")
         

@@ -58,8 +58,11 @@ async def generate(self, synapse: bt.Synapse) -> bt.Synapse:
     timeout = synapse.timeout
     prompt = synapse.prompt_text
     
+    extra_prompts = "Angled front view, solid color background, 3d model, high quality"
+    enhanced_prompt = f"{prompt}, {extra_prompts}"
+    
     if type(synapse).__name__ == "NATextSynapse":
-        result = await _generate_from_text(gen_url=url, timeout=timeout, prompt=prompt)
+        result = await _generate_from_text(gen_url=url, timeout=timeout, prompt=enhanced_prompt)
 
         if not result or not result.get('success'):
             bt.logging.warning("Result is None")

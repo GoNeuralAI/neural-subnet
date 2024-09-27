@@ -256,13 +256,6 @@ def add_validator_args(cls, parser):
         help="The miner challenge count at once",
         default=15,
     )
-    
-    parser.add_argument(
-        "--generation.timeout",
-        type=int,
-        help="Miner 3D Generation Time",
-        default=100
-    )
 
 def config(cls):
     """

@@ -385,7 +385,7 @@ class BaseValidatorNeuron(BaseNeuron):
         # shape: [ metagraph.n ]
         scattered_rewards: np.ndarray = np.zeros_like(self.base_scores)
         scattered_rewards[uids_array] = rewards
-        bt.logging.debug(f"Scattered rewards: {rewards}")
+        bt.logging.debug(f"Final rewards: {rewards}")
 
         # Update base_scores with rewards produced by this step.
         # shape: [ metagraph.n ]
