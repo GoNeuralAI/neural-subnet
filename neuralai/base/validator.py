@@ -414,5 +414,6 @@ class BaseValidatorNeuron(BaseNeuron):
         state = np.load(self.config.neuron.full_path + "/state.npz")
         bt.logging.info(f"Loading validator state.{state['scores']}")
         self.step = state["step"]
-        self.base_scores = state["scores"]
+        for i in range(len(state["scores"])):
+            self.base_scores[i] = float(state["scores"][i])
         self.hotkeys = state["hotkeys"]
