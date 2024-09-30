@@ -73,6 +73,7 @@ pm2 start python3 neurons/miner.py
     --wallet.name {wallet}
     --wallet.hotkey {hotkey}
     --axon.port {port}
+    --axon.external_port {port} # if you both have interal and external port
 ```
 
 #### Generation endpoint with PM2
