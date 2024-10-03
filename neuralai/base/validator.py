@@ -151,7 +151,7 @@ class BaseValidatorNeuron(BaseNeuron):
         # This loop maintains the validator's operations until intentionally stopped.
         while True:
             try:
-                bt.logging.info(f"step({self.step}) block({self.block})")
+                bt.logging.info(f"step({self.step}) block({self.block}) last_update({self.metagraph.last_update[self.uid]})")
 
                 # Run forward.
                 try:
@@ -164,9 +164,7 @@ class BaseValidatorNeuron(BaseNeuron):
                     break
 
                 # Sync metagraph and potentially set weights.
-                import time
-                time.sleep(1)
-
+                bt.logging.info("resync_metagraph()")
                 self.sync()
 
                 self.step += 1
