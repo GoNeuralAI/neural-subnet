@@ -26,11 +26,11 @@ class Miner(BaseMinerNeuron):
     ) -> NATextSynapse:
         # TODO(developer): Replace with actual implementation logic.
         uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
-        self.generation_requests += 1
         
         if not check_status(self):
             bt.logging.warning("Couldn't perform the Generation right now.")
             return synapse
+        self.generation_requests += 1
         
         bt.logging.info(f"====== 3D Generation Started: {synapse.prompt_text} ======")
         
@@ -112,7 +112,7 @@ class Miner(BaseMinerNeuron):
         return await self.blacklist(synapse)
 
     async def forward_status(self, synapse: NAStatus) -> NAStatus:
-        bt.logging.info(f"Current Miner Status: {self.miner_status}")
+        bt.logging.info(f"Current Miner Status: {self.miner_status}, {self.generation_requests}")
         synapse.status = self.miner_status
         if synapse.sn_version > self.spec_version:
             bt.logging.warning(

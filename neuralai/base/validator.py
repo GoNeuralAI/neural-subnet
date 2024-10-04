@@ -157,14 +157,14 @@ class BaseValidatorNeuron(BaseNeuron):
                 try:
                     self.loop.run_until_complete(self.concurrent_forward())
                 except Exception as err:
-                    print_exception(type(err), err, err.__traceback__)
+                    bt.logging.error(f"Error during validation: {str(err)}")
+                    bt.logging.debug(str(print_exception(type(err), err, err.__traceback__)))
 
                 # Check if we should exit.
                 if self.should_exit:
                     break
 
                 # Sync metagraph and potentially set weights.
-                bt.logging.info("resync_metagraph()")
                 self.sync()
 
                 self.step += 1
@@ -375,12 +375,16 @@ class BaseValidatorNeuron(BaseNeuron):
             return
 
         # Check if sizes of rewards and uids_array match.
+        bt.logging.info(rewards.size, uids_array.size)
+        
         if rewards.size != uids_array.size:
             raise ValueError(f"Shape mismatch: rewards array of shape {rewards.shape} "
                              f"cannot be broadcast to uids array of shape {uids_array.shape}")
 
         # Compute forward pass rewards, assumes uids are mutually exclusive.
         # shape: [ metagraph.n ]
+        bt.logging.info("The Same Size")
+        
         scattered_rewards: np.ndarray = np.zeros_like(self.base_scores)
         scattered_rewards[uids_array] = rewards
         bt.logging.debug(f"Final rewards: {rewards}")

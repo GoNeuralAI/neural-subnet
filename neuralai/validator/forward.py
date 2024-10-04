@@ -107,6 +107,8 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             # Considered with the generation time score 0.1
             final_scores = [s * 0.9 + 0.1 * (1 - t) if t else s for t, s in zip(f_time_scores, f_val_scores)]
             
+            bt.logging.info("Scores", np.round(final_scores, 3))
+            
             self.update_scores(final_scores, avail_uids)
 
             bt.logging.info(f"Scoring Taken Time: {time.time() - start_vali_time:.1f}s")
