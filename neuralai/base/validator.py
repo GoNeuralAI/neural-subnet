@@ -375,16 +375,22 @@ class BaseValidatorNeuron(BaseNeuron):
             return
 
         # Check if sizes of rewards and uids_array match.
-        bt.logging.info(rewards.size, uids_array.size)
-        
         if rewards.size != uids_array.size:
             raise ValueError(f"Shape mismatch: rewards array of shape {rewards.shape} "
                              f"cannot be broadcast to uids array of shape {uids_array.shape}")
 
         # Compute forward pass rewards, assumes uids are mutually exclusive.
         # shape: [ metagraph.n ]
-        bt.logging.info("The Same Size")
-        
+        uids_list = self.metagraph.uids.tolist()
+        # Calculate how many elements to add
+        count_to_add = len(uids_list) - len(self.base_scores)
+
+        # Extend base_scores if needed
+        if count_to_add > 0:
+            additional_zeros = np.zeros(count_to_add, dtype=np.float32)
+            # Concatenate the two arrays
+            self.base_scores = np.concatenate((self.base_scores, additional_zeros))
+    
         scattered_rewards: np.ndarray = np.zeros_like(self.base_scores)
         scattered_rewards[uids_array] = rewards
         bt.logging.debug(f"Final rewards: {rewards}")
