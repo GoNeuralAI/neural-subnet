@@ -407,7 +407,7 @@ class BaseValidatorNeuron(BaseNeuron):
         bt.logging.info("Saving validator state.")
 
         # Save the state of the validator to file.
-        self.base_scores = np.where(self.base_scores < 1e-6, 0, self.base_scores)
+        self.base_scores = np.where(self.base_scores < 1e-2, 0, self.base_scores)
         np.savez(
             self.config.neuron.full_path + "/state.npz",
             step=self.step,
