@@ -398,9 +398,9 @@ class BaseValidatorNeuron(BaseNeuron):
         # Update base_scores with rewards produced by this step.
         # shape: [ metagraph.n ]
         alpha: float = self.config.neuron.moving_average_alpha
-        for i in range(len(self.base_scores)):
-            self.base_scores = alpha * np.where(scattered_rewards < 0.1, 0, scattered_rewards) + (1 - alpha) * self.base_scores
+        self.base_scores = alpha * np.where(scattered_rewards < 0.1, 0, scattered_rewards) + (1 - alpha) * self.base_scores
         self.base_scores = np.where(self.base_scores < 1e-3, 0, self.base_scores)
+        
         bt.logging.debug(f"Updated moving avg base_scores: {self.base_scores}")
 
     def save_state(self):
