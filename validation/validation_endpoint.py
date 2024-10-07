@@ -67,6 +67,8 @@ class Validation:
         
         print(f"--------- Total Score: {total_score} ---------")
         
+        if total_score < 0.35:
+            return ValidateResponse(score=0)
         return ValidateResponse(
             score=total_score
         )
