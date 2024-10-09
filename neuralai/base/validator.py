@@ -151,7 +151,7 @@ class BaseValidatorNeuron(BaseNeuron):
         # This loop maintains the validator's operations until intentionally stopped.
         while True:
             try:
-                bt.logging.info(f"step({self.step}) block({self.block}) last_update({self.metagraph.last_update[self.uid]})")
+                # bt.logging.info(f"step({self.step}) block({self.block}) last_update({self.metagraph.last_update[self.uid]})")
 
                 # Run forward.
                 try:
@@ -246,14 +246,14 @@ class BaseValidatorNeuron(BaseNeuron):
         previous_score = None
         for i, (id, score) in enumerate(sorted_pairs):
             if score != previous_score:
-                current_rank = i + 1
+                current_rank = i
             ranks.append((id, current_rank, score))
             previous_score = score
         
         # Sort back to original order
         ranks.sort(key=lambda x: x[0])
         
-        self.scores = [(math.exp(-0.015 * rank) if score > 0 else 0) for id, rank, score in ranks]
+        self.scores = [(math.exp(-0.035 * rank) if score > 0 else 0) for id, rank, score in ranks]
         
         bt.logging.info(f"scores: {self.scores}")
 

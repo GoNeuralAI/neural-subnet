@@ -160,6 +160,8 @@ cython_debug/
 #.idea/
 
 testing/
+wandb/
+validation/results
 
 # Editors
 .vscode/settings.json
