@@ -41,10 +41,11 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     val_scores = []
     
     # wandb
-    today = datetime.date.today()
-    if self.wandb_manager.wandb_start != today:
-        self.wandb_manager.wandb.finish()
-        self.wandb_manager.init_wandb()
+    if not self.config.wandb.off:
+        today = datetime.date.today()
+        if self.wandb_manager.wandb_start != today:
+            self.wandb_manager.wandb.finish()
+            self.wandb_manager.init_wandb()
     
     bt.logging.info("Checking Available Miners...")
     avail_uids = get_forward_uids(self, count=self.config.neuron.challenge_count)
@@ -73,7 +74,7 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             # The dendrite client queries the network.
             process_time = []
             time_rate = self.config.validator.time_rate
-            bt.logging.info(f"Currnet Task Prompt: {task}")
+            bt.logging.info(f"======== Currnet Task Prompt: {task} ========")
         
             responses = self.dendrite.query(
                 # Send the query to selected miner axons in the network.
@@ -100,15 +101,17 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             # Update rewards and scores
             scores = get_rewards(val_scores, avail_uids, forward_uids)
             f_val_scores = normalize(scores)
-            bt.logging.info("3D Object Validation Scores", np.round(scores, 3))
+            bt.logging.info('-' * 40)
+            bt.logging.info("=== 3D Object Validation Scores ===", np.round(scores, 3))
             scores = get_rewards(process_time, avail_uids, forward_uids)
             f_time_scores = normalize(scores)
-            bt.logging.info("Generation Time Scores", np.round(scores, 3))
+            bt.logging.info("=== Generation Time Scores ===", np.round(scores, 3))
             
             # Considered with the generation time score 0.1
             final_scores = [s * (1 - time_rate) + time_rate * (1 - t) if t else s for t, s in zip(f_time_scores, f_val_scores)]
             
-            bt.logging.info("Scores", np.round(final_scores, 3))
+            bt.logging.info("=== Total Scores ===", np.round(final_scores, 3))
+            bt.logging.info('-' * 40)
             
             self.update_scores(final_scores, avail_uids)
 
@@ -123,4 +126,5 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     
     if taken_time < loop_time:
         bt.logging.info(f"== Taken Time: {taken_time:.1f}s | Sleeping For {loop_time - taken_time:.1f}s ==")
+        bt.logging.info('=' * 50)
         time.sleep(loop_time - taken_time)

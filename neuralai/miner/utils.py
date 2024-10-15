@@ -19,7 +19,7 @@ def check_status(self):
         return True
     return False
     
-def check_validator(self, uid: int, interval: int = 300):
+def check_validator(self, uid: int, interval: int = 200):
     cur_time = time.time()
     bt.logging.debug(f"Checking validator for UID: {uid} : {self.validators[uid]}")
     

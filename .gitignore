@@ -160,7 +160,6 @@ cython_debug/
 #.idea/
 
 testing/
-wandb/
 validation/results
 
 # Editors

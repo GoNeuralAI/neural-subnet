@@ -17,7 +17,7 @@ async def validate(val_url: str, prompt: str, uid: int, timeout: float):
                     bt.logging.debug(f"===== {uid} : {results} =====")
                     return results
                 else:
-                    bt.logging.error(f"{uid}: Validation failed. Please try again.: {response.status}")
+                    bt.logging.error(f"===== {uid} : Validation failed. Please try again.: {response.status} =====")
                 return {'score': 0}
         except aiohttp.ClientConnectorError:
             bt.logging.error(f"Failed to connect to the server. Please try to access again: {val_url}.")

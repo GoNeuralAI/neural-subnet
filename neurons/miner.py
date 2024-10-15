@@ -36,13 +36,14 @@ class Miner(BaseMinerNeuron):
         
         set_status(self, "generation")
         #send gpu id as a parameter for multi gpu
+        start = time.time()
         synapse = await generate(self, synapse)
         
         self.generation_requests -= 1
         if self.generation_requests < self.config.miner.concurrent_limit:
             set_status(self)
             
-        bt.logging.info(f"====== 3D Generation Ended ======")
+        bt.logging.info(f"====== 3D Generation Ended : Taken Time {time.time() - start:.1f}s ======")
         
         return synapse
     
