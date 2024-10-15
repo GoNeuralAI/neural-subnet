@@ -68,19 +68,14 @@ cd neural-subnet
 
 #### Run Miner with PM2
 ```comandline
-pm2 start python3 neurons/miner.py
-    --netuid {netuid}
-    --wallet.name {wallet}
-    --wallet.hotkey {hotkey}
-    --axon.port {port}
-    --axon.external_port {port} # if you both have interal and external port
+pm2 start python3 neurons/miner.py --netuid {netuid} --wallet.name {wallet} --wallet.hotkey {hotkey} --axon.port {port} --axon.external_port {port} # if you have both interal and external port
 ```
 
 #### Generation endpoint with PM2
 ```commandline
 cd generate
 pip install -r requirements.txt
-pm2 start serve.py --interpreter python3 --name endpoint -- configs/instant-mesh-large.yaml --port 8093 #{port - default local port 8093} 
+pm2 start serve.py --interpreter python3 --name endpoint -- configs/instant-mesh-large.yaml --port 8093 #{default local port 8093} 
 ```
 
 ### Running Validators
@@ -95,11 +90,7 @@ cd neural-subnet
 
 #### Run Validator with PM@
 ```commandline
-pm2 start python3 neurons/validator.py
-    --netuid {netuid}
-    --wallet.name {wallet}
-    --wallet.hotkey {hotkey}
-    --axon.port {port}
+pm2 start python3 neurons/validator.py --netuid {netuid} --wallet.name {wallet} --wallet.hotkey {hotkey} --axon.port {port}
 ```
 
 #### Validation endpoint with PM2
