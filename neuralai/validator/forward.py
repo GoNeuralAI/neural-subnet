@@ -72,6 +72,7 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
         if nas.prompt_text:
             # The dendrite client queries the network.
             process_time = []
+            time_rate = self.config.validator.time_rate
             bt.logging.info(f"Currnet Task Prompt: {task}")
         
             responses = self.dendrite.query(
@@ -105,7 +106,7 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             bt.logging.info("Generation Time Scores", np.round(scores, 3))
             
             # Considered with the generation time score 0.1
-            final_scores = [s * 0.9 + 0.1 * (1 - t) if t else s for t, s in zip(f_time_scores, f_val_scores)]
+            final_scores = [s * (1 - time_rate) + time_rate * (1 - t) if t else s for t, s in zip(f_time_scores, f_val_scores)]
             
             bt.logging.info("Scores", np.round(final_scores, 3))
             

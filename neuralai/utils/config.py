@@ -216,7 +216,7 @@ def add_validator_args(cls, parser):
         "--neuron.moving_average_alpha",
         type=float,
         help="Moving average alpha parameter, how much to add of the new observation.",
-        default=0.1,
+        default=0.05,
     )
 
     parser.add_argument(
@@ -227,6 +227,13 @@ def add_validator_args(cls, parser):
         #   be blacklisted by the firewall of serving peers on the network.
         help="Set this flag to not attempt to serve an Axon.",
         default=False,
+    )
+    
+    parser.add_argument(
+        "--validator.time_rate",
+        type=float,
+        help="The miner challenge count at once",
+        default=0.07,
     )
 
     parser.add_argument(
