@@ -84,7 +84,12 @@ def render_mesh(obj_file: str, distance: float = 1.5, elevation: float = 15, azi
             blur_radius=0.0,
             faces_per_pixel=1,
         )
-        lights = PointLights(device=device, location=[[2.0, 2.0, 2.0]])
+        lights = PointLights(
+            device=device,
+            location=[[2,2,2]],
+            ambient_color=[[1, 1, 1]],  # Standard ambient color
+            specular_color=[[0, 0, 0]]  # Standard specular color
+        )
         renderer = MeshRenderer(
             rasterizer=MeshRasterizer(
                 cameras=cameras,
@@ -113,7 +118,6 @@ def render_mesh(obj_file: str, distance: float = 1.5, elevation: float = 15, azi
                     lights=lights
                 )
             )
-            
             # Render the image
             images = renderer(mesh)
             
@@ -122,25 +126,19 @@ def render_mesh(obj_file: str, distance: float = 1.5, elevation: float = 15, azi
             if image.shape[0] != 3:
                 image = image.permute(2, 0, 1)  # Change shape to [C, H, W]
             
+            # Extract the alpha channel
+            alpha = images[0, ..., 3].cpu().detach()  # Extract the alpha channel
+            alpha = alpha.unsqueeze(0)  # Match the shape of the image
+            
             # Ensure the image tensor is in the [0, 1] range
             image = (image - image.min()) / (image.max() - image.min())
             
-            # Create a black background
-            height, width = image.shape[1], image.shape[2]
-            gradient_background = torch.linspace(0, 1, steps=height).unsqueeze(1).expand(height, width)
-            gradient_background = gradient_background.unsqueeze(0).expand_as(image)
+            # Composite the image with transparency
+            image = torch.cat([image, alpha], dim=0)  # Add alpha channel to the image
             
-            # Composite the image with the black background
-            alpha = images[0, ..., 3].cpu().detach()  # Extract the alpha channel
-            alpha = alpha.unsqueeze(0).expand_as(image)  # Match the shape of the image
-            image = image * alpha + gradient_background * (1 - alpha)
-            
-            # image_filename = os.path.join(OUTPUT_DIR, f'image_{angle}.png')
-            # save_image(image, image_filename)  # Save image
-            # print(f'Saved image to {image_filename}')
-            
-            ndarr = image.mul(255).clamp(0, 255).byte().numpy().transpose(1, 2, 0)  # Convert to [H, W, C]
-            pil_image = Image.fromarray(ndarr)
+            # Convert to [H, W, C] format with RGBA
+            ndarr = image.mul(255).clamp(0, 255).byte().numpy().transpose(1, 2, 0)
+            pil_image = Image.fromarray(ndarr, 'RGBA')  # Specify 'RGBA' to include alpha
             
             buffer = io.BytesIO()
             pil_image.save(buffer, format='PNG')  # Save the PIL image to the buffer
