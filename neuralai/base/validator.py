@@ -391,14 +391,17 @@ class BaseValidatorNeuron(BaseNeuron):
             # Concatenate the two arrays
             self.base_scores = np.concatenate((self.base_scores, additional_zeros))
     
-        scattered_rewards: np.ndarray = np.zeros_like(self.base_scores)
+        scattered_rewards: np.ndarray = np.full_like(self.base_scores, -1)
         scattered_rewards[uids_array] = rewards
         bt.logging.debug(f"Final rewards: {rewards}")
 
         # Update base_scores with rewards produced by this step.
         # shape: [ metagraph.n ]
         alpha: float = self.config.neuron.moving_average_alpha
-        self.base_scores = alpha * np.where(scattered_rewards < 0.1, 0, scattered_rewards) + (1 - alpha) * self.base_scores
+        for i in range(len(self.base_scores)):
+            if scattered_rewards[i] != -1:
+                self.base_scores[i] = alpha * (0 if scattered_rewards[i] < 0.1 else scattered_rewards[i]) + (1 - alpha) * self.base_scores[i]
+
         self.base_scores = np.where(self.base_scores < 1e-2, 0, self.base_scores)
         
         bt.logging.debug(f"Updated moving avg base_scores: {self.base_scores}")
