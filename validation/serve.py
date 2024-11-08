@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 
 from models import ValidateRequest, ValidateResponse
-from validation.validation_endpoint import Validation
+from validation_endpoint import Validation
 
 app = FastAPI()
 
