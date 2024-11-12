@@ -1,383 +1,302 @@
+# Open Source Model Licensed under the Apache License Version 2.0 and Other Licenses of the Third-Party Components therein:
+# The below Model in this distribution may have been modified by THL A29 Limited ("Tencent Modifications"). All Tencent Modifications are Copyright (C) 2024 THL A29 Limited.
+
+# Copyright (C) 2024 THL A29 Limited, a Tencent company.  All rights reserved. 
+# The below software and/or models in this distribution may have been 
+# modified by THL A29 Limited ("Tencent Modifications"). 
+# All Tencent Modifications are Copyright (C) THL A29 Limited.
+
+# Hunyuan 3D is licensed under the TENCENT HUNYUAN NON-COMMERCIAL LICENSE AGREEMENT 
+# except for the third-party components listed below. 
+# Hunyuan 3D does not impose any additional limitations beyond what is outlined 
+# in the repsective licenses of these third-party components. 
+# Users must comply with all terms and conditions of original licenses of these third-party 
+# components and must ensure that the usage of the third party components adheres to 
+# all relevant laws and regulations. 
+
+# For avoidance of doubts, Hunyuan 3D means the large language models and 
+# their software and algorithms, including trained model weights, parameters (including 
+# optimizer states), machine-learning model code, inference-enabling code, training-enabling code, 
+# fine-tuning enabling code and other elements of the foregoing made publicly available 
+# by Tencent in accordance with TENCENT HUNYUAN COMMUNITY LICENSE AGREEMENT.
+
 import os
-import imageio
-import numpy as np
-import torch
-import rembg
-from PIL import Image
-from torchvision.transforms import v2
-from pytorch_lightning import seed_everything
-from omegaconf import OmegaConf
-from einops import rearrange, repeat
-from tqdm import tqdm
-from diffusers import DiffusionPipeline, EulerAncestralDiscreteScheduler
-
-from src.utils.train_util import instantiate_from_config
-from src.utils.camera_util import (
-    FOV_to_intrinsics, 
-    get_zero123plus_input_cameras,
-    get_circular_camera_poses,
-)
-from src.utils.mesh_util import save_obj, save_glb
-from src.utils.infer_util import remove_background, resize_foreground, images_to_video
-
-import tempfile
-from huggingface_hub import hf_hub_download
-
-
-if torch.cuda.is_available() and torch.cuda.device_count() >= 2:
-    device0 = torch.device('cuda:0')
-    device1 = torch.device('cuda:1')
-else:
-    device0 = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    device1 = device0
-
-# Define the cache directory for model files
-model_cache_dir = './ckpts/'
-os.makedirs(model_cache_dir, exist_ok=True)
-
-def get_render_cameras(batch_size=1, M=120, radius=2.5, elevation=10.0, is_flexicubes=False):
-    """
-    Get the rendering camera parameters.
-    """
-    c2ws = get_circular_camera_poses(M=M, radius=radius, elevation=elevation)
-    if is_flexicubes:
-        cameras = torch.linalg.inv(c2ws)
-        cameras = cameras.unsqueeze(0).repeat(batch_size, 1, 1, 1)
-    else:
-        extrinsics = c2ws.flatten(-2)
-        intrinsics = FOV_to_intrinsics(30.0).unsqueeze(0).repeat(M, 1, 1).float().flatten(-2)
-        cameras = torch.cat([extrinsics, intrinsics], dim=-1)
-        cameras = cameras.unsqueeze(0).repeat(batch_size, 1, 1)
-    return cameras
-
-
-def images_to_video(images, output_path, fps=30):
-    # images: (N, C, H, W)
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    frames = []
-    for i in range(images.shape[0]):
-        frame = (images[i].permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8).clip(0, 255)
-        assert frame.shape[0] == images.shape[2] and frame.shape[1] == images.shape[3], \
-            f"Frame shape mismatch: {frame.shape} vs {images.shape}"
-        assert frame.min() >= 0 and frame.max() <= 255, \
-            f"Frame value out of range: {frame.min()} ~ {frame.max()}"
-        frames.append(frame)
-    imageio.mimwrite(output_path, np.stack(frames), fps=fps, codec='h264')
-
-
-###############################################################################
-# Configuration.
-###############################################################################
-
-seed_everything(0)
-
-config_path = 'configs/instant-mesh-large.yaml'
-config = OmegaConf.load(config_path)
-config_name = os.path.basename(config_path).replace('.yaml', '')
-model_config = config.model_config
-infer_config = config.infer_config
-
-IS_FLEXICUBES = True if config_name.startswith('instant-mesh') else False
-
-device = torch.device('cuda')
-
-# load diffusion model
-print('Loading diffusion model ...')
-pipeline = DiffusionPipeline.from_pretrained(
-    "sudo-ai/zero123plus-v1.2", 
-    custom_pipeline="zero123plus",
-    torch_dtype=torch.float16,
-    cache_dir=model_cache_dir
-)
-pipeline.scheduler = EulerAncestralDiscreteScheduler.from_config(
-    pipeline.scheduler.config, timestep_spacing='trailing'
-)
-
-# load custom white-background UNet
-unet_ckpt_path = hf_hub_download(repo_id="TencentARC/InstantMesh", filename="diffusion_pytorch_model.bin", repo_type="model", cache_dir=model_cache_dir)
-state_dict = torch.load(unet_ckpt_path, map_location='cpu')
-pipeline.unet.load_state_dict(state_dict, strict=True)
-
-pipeline = pipeline.to(device0)
-
-# load reconstruction model
-print('Loading reconstruction model ...')
-model_ckpt_path = hf_hub_download(repo_id="TencentARC/InstantMesh", filename="instant_mesh_large.ckpt", repo_type="model", cache_dir=model_cache_dir)
-model = instantiate_from_config(model_config)
-state_dict = torch.load(model_ckpt_path, map_location='cpu')['state_dict']
-state_dict = {k[14:]: v for k, v in state_dict.items() if k.startswith('lrm_generator.') and 'source_camera' not in k}
-model.load_state_dict(state_dict, strict=True)
-
-model = model.to(device1)
-if IS_FLEXICUBES:
-    model.init_flexicubes_geometry(device1, fovy=30.0)
-model = model.eval()
-
-print('Loading Finished!')
-
-
-def check_input_image(input_image):
-    if input_image is None:
-        raise gr.Error("No image uploaded!")
-
-
-def preprocess(input_image, do_remove_background):
-
-    rembg_session = rembg.new_session() if do_remove_background else None
-    if do_remove_background:
-        input_image = remove_background(input_image, rembg_session)
-        input_image = resize_foreground(input_image, 0.85)
-
-    return input_image
-
-
-def generate_mvs(input_image, sample_steps, sample_seed):
-
-    seed_everything(sample_seed)
-    
-    # sampling
-    generator = torch.Generator(device=device0)
-    z123_image = pipeline(
-        input_image, 
-        num_inference_steps=sample_steps, 
-        generator=generator,
-    ).images[0]
-
-    show_image = np.asarray(z123_image, dtype=np.uint8)
-    show_image = torch.from_numpy(show_image)     # (960, 640, 3)
-    show_image = rearrange(show_image, '(n h) (m w) c -> (n m) h w c', n=3, m=2)
-    show_image = rearrange(show_image, '(n m) h w c -> (n h) (m w) c', n=2, m=3)
-    show_image = Image.fromarray(show_image.numpy())
-
-    return z123_image, show_image
-
-
-def make_mesh(mesh_fpath, planes):
-
-    mesh_basename = os.path.basename(mesh_fpath).split('.')[0]
-    mesh_dirname = os.path.dirname(mesh_fpath)
-    mesh_glb_fpath = os.path.join(mesh_dirname, f"{mesh_basename}.glb")
-        
-    with torch.no_grad():
-        # get mesh
-
-        mesh_out = model.extract_mesh(
-            planes,
-            use_texture_map=False,
-            **infer_config,
-        )
-
-        vertices, faces, vertex_colors = mesh_out
-        vertices = vertices[:, [1, 2, 0]]
-        
-        save_glb(vertices, faces, vertex_colors, mesh_glb_fpath)
-        save_obj(vertices, faces, vertex_colors, mesh_fpath)
-        
-        print(f"Mesh saved to {mesh_fpath}")
-
-    return mesh_fpath, mesh_glb_fpath
-
-
-def make3d(images):
-
-    images = np.asarray(images, dtype=np.float32) / 255.0
-    images = torch.from_numpy(images).permute(2, 0, 1).contiguous().float()     # (3, 960, 640)
-    images = rearrange(images, 'c (n h) (m w) -> (n m) c h w', n=3, m=2)        # (6, 3, 320, 320)
-
-    input_cameras = get_zero123plus_input_cameras(batch_size=1, radius=4.0).to(device1)
-    render_cameras = get_render_cameras(
-        batch_size=1, radius=4.5, elevation=20.0, is_flexicubes=IS_FLEXICUBES).to(device1)
-
-    images = images.unsqueeze(0).to(device1)
-    images = v2.functional.resize(images, (320, 320), interpolation=3, antialias=True).clamp(0, 1)
-
-    mesh_fpath = tempfile.NamedTemporaryFile(suffix=f".obj", delete=False).name
-    print(mesh_fpath)
-    mesh_basename = os.path.basename(mesh_fpath).split('.')[0]
-    mesh_dirname = os.path.dirname(mesh_fpath)
-    video_fpath = os.path.join(mesh_dirname, f"{mesh_basename}.mp4")
-
-    with torch.no_grad():
-        # get triplane
-        planes = model.forward_planes(images, input_cameras)
-
-        # get video
-        chunk_size = 20 if IS_FLEXICUBES else 1
-        render_size = 384
-        
-        frames = []
-        for i in tqdm(range(0, render_cameras.shape[1], chunk_size)):
-            if IS_FLEXICUBES:
-                frame = model.forward_geometry(
-                    planes,
-                    render_cameras[:, i:i+chunk_size],
-                    render_size=render_size,
-                )['img']
-            else:
-                frame = model.synthesizer(
-                    planes,
-                    cameras=render_cameras[:, i:i+chunk_size],
-                    render_size=render_size,
-                )['images_rgb']
-            frames.append(frame)
-        frames = torch.cat(frames, dim=1)
-
-        images_to_video(
-            frames[0],
-            video_fpath,
-            fps=30,
-        )
-
-        print(f"Video saved to {video_fpath}")
-
-    mesh_fpath, mesh_glb_fpath = make_mesh(mesh_fpath, planes)
-
-    return video_fpath, mesh_fpath, mesh_glb_fpath
-
+import warnings
+warnings.simplefilter('ignore', category=UserWarning)
+warnings.simplefilter('ignore', category=FutureWarning)
+warnings.simplefilter('ignore', category=DeprecationWarning)
 
 import gradio as gr
+from glob import glob
+import shutil
+import torch
+import numpy as np
+from PIL import Image
+from einops import rearrange
 
-_HEADER_ = '''
-<h2><b>Official 🤗 Gradio Demo</b></h2><h2><a href='https://github.com/TencentARC/InstantMesh' target='_blank'><b>InstantMesh: Efficient 3D Mesh Generation from a Single Image with Sparse-view Large Reconstruction Models</b></a></h2>
+import argparse
 
-**InstantMesh** is a feed-forward framework for efficient 3D mesh generation from a single image based on the LRM/Instant3D architecture.
+parser = argparse.ArgumentParser()
+parser.add_argument("--use_lite", default=False, action="store_true")
+parser.add_argument("--mv23d_cfg_path", default="./svrm/configs/svrm.yaml", type=str)
+parser.add_argument("--mv23d_ckt_path", default="weights/svrm/svrm.safetensors", type=str)
+parser.add_argument("--text2image_path", default="weights/hunyuanDiT", type=str)
+parser.add_argument("--save_memory", default=False, action="store_true")
+parser.add_argument("--device", default="cuda:0", type=str)
+args = parser.parse_args()
 
-Code: <a href='https://github.com/TencentARC/InstantMesh' target='_blank'>GitHub</a>. Techenical report: <a href='https://arxiv.org/abs/2404.07191' target='_blank'>ArXiv</a>.
+################################################################
+
+CONST_PORT = 8080
+CONST_MAX_QUEUE = 1
+CONST_SERVER = '0.0.0.0'
+
+CONST_HEADER = '''
+<h2><b>Official 🤗 Gradio Demo</b></h2><h2><a href='https://github.com/tencent/Hunyuan3D-1' target='_blank'><b>Hunyuan3D-1.0: A Unified Framework for Text-to-3D and Image-to-3D
+Generationr</b></a></h2>
+Code: <a href='https://github.com/tencent/Hunyuan3D-1' target='_blank'>GitHub</a>. Techenical report: <a href='https://arxiv.org/abs/placeholder' target='_blank'>ArXiv</a>.
 
 ❗️❗️❗️**Important Notes:**
-- Our demo can export a .obj mesh with vertex colors or a .glb mesh now. If you prefer to export a .obj mesh with a **texture map**, please refer to our <a href='https://github.com/TencentARC/InstantMesh?tab=readme-ov-file#running-with-command-line' target='_blank'>Github Repo</a>.
-- The 3D mesh generation results highly depend on the quality of generated multi-view images. Please try a different **seed value** if the result is unsatisfying (Default: 42).
+- Our demo can export a .obj mesh with vertex colors or a .glb mesh by default. 
+- If you check "texture mapping", it will export a .obj mesh with a texture map or a .glb mesh.
+- If you check "render Gif", it will export gif image rendering .glb file.
+- If the result is unsatisfying, please try a different **seed value** (Default: 0).
 '''
 
-_CITE_ = r"""
-If InstantMesh is helpful, please help to ⭐ the <a href='https://github.com/TencentARC/InstantMesh' target='_blank'>Github Repo</a>. Thanks! [![GitHub Stars](https://img.shields.io/github/stars/TencentARC/InstantMesh?style=social)](https://github.com/TencentARC/InstantMesh)
+CONST_CITATION = r"""
+If HunYuan3D-1 is helpful, please help to ⭐ the <a href='https://github.com/tencent/Hunyuan3D-1' target='_blank'>Github Repo</a>. Thanks! [![GitHub Stars](https://img.shields.io/github/stars/tencent/Hunyuan3D-1?style=social)](https://github.com/tencent/Hunyuan3D-1)
 ---
 📝 **Citation**
-
 If you find our work useful for your research or applications, please cite using this bibtex:
 ```bibtex
-@article{xu2024instantmesh,
-  title={InstantMesh: Efficient 3D Mesh Generation from a Single Image with Sparse-view Large Reconstruction Models},
-  author={Xu, Jiale and Cheng, Weihao and Gao, Yiming and Wang, Xintao and Gao, Shenghua and Shan, Ying},
-  journal={arXiv preprint arXiv:2404.07191},
-  year={2024}
+@misc{xxx,
+      title={Hunyuan3D-1.0: First Unified Framework for Text-to-3D and Image-to-3D Generation}, 
+      author={},
+      year={2024},
+      eprint={},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
 }
 ```
-
-📋 **License**
-
-Apache-2.0 LICENSE. Please refer to the [LICENSE file](https://huggingface.co/spaces/TencentARC/InstantMesh/blob/main/LICENSE) for details.
-
-📧 **Contact**
-
-If you have any questions, feel free to open a discussion or contact us at <b>bluestyle928@gmail.com</b>.
 """
 
-with gr.Blocks() as demo:
-    gr.Markdown(_HEADER_)
-    with gr.Row(variant="panel"):
-        with gr.Column():
-            with gr.Row():
-                input_image = gr.Image(
-                    label="Input Image",
-                    image_mode="RGBA",
-                    sources="upload",
-                    width=256,
-                    height=256,
-                    type="pil",
-                    elem_id="content_image",
-                )
-                processed_image = gr.Image(
-                    label="Processed Image", 
-                    image_mode="RGBA", 
-                    width=256,
-                    height=256,
-                    type="pil", 
-                    interactive=False
-                )
-            with gr.Row():
-                with gr.Group():
-                    do_remove_background = gr.Checkbox(
-                        label="Remove Background", value=True
-                    )
-                    sample_seed = gr.Number(value=42, label="Seed Value", precision=0)
+################################################################
 
-                    sample_steps = gr.Slider(
-                        label="Sample Steps",
-                        minimum=30,
-                        maximum=75,
-                        value=75,
-                        step=5
-                    )
+def get_example_img_list():
+    print('Loading example img list ...')
+    return sorted(glob('./demos/example_*.png'))
 
-            with gr.Row():
-                submit = gr.Button("Generate", elem_id="generate", variant="primary")
+def get_example_txt_list():
+    print('Loading example txt list ...')
+    txt_list  = list()
+    for line in open('./demos/example_list.txt'):
+        txt_list.append(line.strip())
+    return txt_list
 
-            with gr.Row(variant="panel"):
-                gr.Examples(
-                    examples=[
-                        os.path.join("examples", img_name) for img_name in sorted(os.listdir("examples"))
-                    ],
-                    inputs=[input_image],
-                    label="Examples",
-                    examples_per_page=20
-                )
+example_is = get_example_img_list()
+example_ts = get_example_txt_list()
+################################################################
 
-        with gr.Column():
+from infer import seed_everything, save_gif
+from infer import Text2Image, Removebg, Image2Views, Views2Mesh, GifRenderer
 
-            with gr.Row():
 
-                with gr.Column():
-                    mv_show_images = gr.Image(
-                        label="Generated Multi-views",
-                        type="pil",
-                        width=379,
-                        interactive=False
-                    )
+worker_xbg = Removebg()
+print(f"loading {args.text2image_path}")
+worker_t2i = Text2Image(
+    pretrain = args.text2image_path, 
+    device = args.device, 
+    save_memory = args.save_memory
+)
+worker_i2v = Image2Views(
+    use_lite = args.use_lite, 
+    device = args.device
+)
+worker_v23 = Views2Mesh(
+    args.mv23d_cfg_path, 
+    args.mv23d_ckt_path, 
+    use_lite = args.use_lite, 
+    device = args.device
+)
+worker_gif = GifRenderer(args.device)
 
-                with gr.Column():
-                    output_video = gr.Video(
-                        label="video", format="mp4",
-                        width=379,
-                        autoplay=True,
-                        interactive=False
-                    )
+def stage_0_t2i(text, image, seed, step):
+    # prepare save_folder
+    os.makedirs('./outputs/app_output', exist_ok=True)
+    exists = set(int(_) for _ in os.listdir('./outputs/app_output') if not _.startswith("."))
+    if len(exists) == 30: shutil.rmtree(f"./outputs/app_output/0");cur_id = 0
+    else:                 cur_id = min(set(range(30)) - exists)
+    if os.path.exists(f"./outputs/app_output/{(cur_id + 1) % 30}"):
+        shutil.rmtree(f"./outputs/app_output/{(cur_id + 1) % 30}")
+    save_folder = f'./outputs/app_output/{cur_id}'
+    os.makedirs(save_folder, exist_ok=True)
 
-            with gr.Row():
-                with gr.Tab("OBJ"):
-                    output_model_obj = gr.Model3D(
-                        label="Output Model (OBJ Format)",
-                        #width=768,
-                        interactive=False,
-                    )
-                    gr.Markdown("Note: Downloaded .obj model will be flipped. Export .glb instead or manually flip it before usage.")
-                with gr.Tab("GLB"):
-                    output_model_glb = gr.Model3D(
-                        label="Output Model (GLB Format)",
-                        #width=768,
-                        interactive=False,
-                    )
-                    gr.Markdown("Note: The model shown here has a darker appearance. Download to get correct results.")
+    dst = save_folder + '/img.png'
+    
+    if not text:
+        if image is None: 
+            return dst, save_folder
+            raise gr.Error("Upload image or provide text ...")
+        image.save(dst)
+        return dst, save_folder
+        
+    image = worker_t2i(text, seed, step)
+    image.save(dst)
+    dst = worker_xbg(image, save_folder)
+    return dst, save_folder
 
-            with gr.Row():
-                gr.Markdown('''Try a different <b>seed value</b> if the result is unsatisfying (Default: 42).''')
+def stage_1_xbg(image, save_folder): 
+    if isinstance(image, str):
+        image = Image.open(image)
+    dst =  save_folder + '/img_nobg.png'
+    rgba = worker_xbg(image)
+    rgba.save(dst)
+    return dst
+    
+def stage_2_i2v(image, seed, step, save_folder):
+    if isinstance(image, str):
+        image = Image.open(image)
+    gif_dst = save_folder + '/views.gif'
+    res_img, pils = worker_i2v(image, seed, step)
+    save_gif(pils, gif_dst)
+    views_img, cond_img = res_img[0], res_img[1]
+    img_array = np.asarray(views_img, dtype=np.uint8)
+    show_img = rearrange(img_array, '(n h) (m w) c -> (n m) h w c', n=3, m=2)
+    show_img = show_img[worker_i2v.order, ...]
+    show_img = rearrange(show_img, '(n m) h w c -> (n h) (m w) c', n=2, m=3)
+    show_img = Image.fromarray(show_img) 
+    return views_img, cond_img, show_img
 
-    gr.Markdown(_CITE_)
-    mv_images = gr.State()
-
-    submit.click(fn=check_input_image, inputs=[input_image]).success(
-        fn=preprocess,
-        inputs=[input_image, do_remove_background],
-        outputs=[processed_image],
-    ).success(
-        fn=generate_mvs,
-        inputs=[processed_image, sample_steps, sample_seed],
-        outputs=[mv_images, mv_show_images],
-    ).success(
-        fn=make3d,
-        inputs=[mv_images],
-        outputs=[output_video, output_model_obj, output_model_glb]
+def stage_3_v23(
+    views_pil, 
+    cond_pil, 
+    seed, 
+    save_folder,
+    target_face_count = 30000,
+    do_texture_mapping = True,
+    do_render =True
+): 
+    do_texture_mapping = do_texture_mapping or do_render
+    obj_dst = save_folder + '/mesh_with_colors.obj'
+    glb_dst = save_folder + '/mesh.glb'
+    worker_v23(
+        views_pil, 
+        cond_pil, 
+        seed = seed, 
+        save_folder = save_folder,
+        target_face_count = target_face_count,
+        do_texture_mapping = do_texture_mapping
     )
+    return obj_dst, glb_dst
 
-demo.queue(max_size=10)
-demo.launch(server_name="0.0.0.0", server_port=43839)
+def stage_4_gif(obj_dst, save_folder, do_render_gif=True):
+    if not do_render_gif: return None
+    gif_dst = save_folder + '/output.gif'
+    worker_gif(
+        save_folder + '/mesh.obj',
+        gif_dst_path = gif_dst
+    )
+    return gif_dst
+
+#===============================================================
+with gr.Blocks() as demo:
+    gr.Markdown(CONST_HEADER)
+    with gr.Row(variant="panel"):
+        with gr.Column(scale=2):
+            with gr.Tab("Text to 3D"):
+                with gr.Column():
+                    text = gr.TextArea('一只黑白相间的熊猫在白色背景上居中坐着，呈现出卡通风格和可爱氛围。', lines=1, max_lines=10, label='Input text')
+                    with gr.Row():
+                        textgen_seed = gr.Number(value=0, label="T2I seed", precision=0)
+                        textgen_step = gr.Number(value=25, label="T2I step", precision=0)
+                        textgen_SEED = gr.Number(value=0, label="Gen seed", precision=0)
+                        textgen_STEP = gr.Number(value=50, label="Gen step", precision=0)
+                        textgen_max_faces = gr.Number(value=90000, label="max number of faces", precision=0)
+                        
+                    with gr.Row():
+                        textgen_do_texture_mapping = gr.Checkbox(label="texture mapping", value=False, interactive=True)
+                        textgen_do_render_gif = gr.Checkbox(label="Render gif", value=False, interactive=True)
+                        textgen_submit = gr.Button("Generate", variant="primary")
+
+                    with gr.Row():
+                        gr.Examples(examples=example_ts, inputs=[text], label="Txt examples", examples_per_page=10)
+                    
+            with gr.Tab("Image to 3D"):
+                with gr.Column():
+                    input_image = gr.Image(label="Input image",
+                                           width=256, height=256, type="pil",
+                                           image_mode="RGBA", sources="upload",
+                                           interactive=True)
+                    with gr.Row(): 
+                        imggen_SEED = gr.Number(value=0, label="Gen seed", precision=0)
+                        imggen_STEP = gr.Number(value=50, label="Gen step", precision=0)
+                        imggen_max_faces = gr.Number(value=90000, label="max number of faces", precision=0)
+
+                    with gr.Row():
+                        imggen_do_texture_mapping = gr.Checkbox(label="texture mapping", value=False, interactive=True)
+                        imggen_do_render_gif = gr.Checkbox(label="Render gif", value=False, interactive=True)
+                        imggen_submit = gr.Button("Generate", variant="primary")       
+                    with gr.Row():
+                        gr.Examples(examples=example_is, inputs=[input_image], label="Img examples", examples_per_page=10)
+           
+        with gr.Column(scale=3):
+            with gr.Tab("rembg image"):
+                rem_bg_image = gr.Image(label="No backgraound image",
+                                       width=256, height=256, type="pil",
+                                       image_mode="RGBA", interactive=False)
+            
+            with gr.Tab("Multi views"):
+                result_image = gr.Image(label="Multi views", type="pil", interactive=False)
+            with gr.Tab("Obj"):
+                result_3dobj = gr.Model3D(label="Output obj", interactive=False)
+            with gr.Tab("Glb"):
+                result_3dglb = gr.Model3D(label="Output glb", interactive=False)
+                gr.Markdown("The glb file displayed on the grario will be dark. We recommend downloading and opening it with 3D software, such as Blender, MeshLab, etc")
+            with gr.Tab("GIF"):
+                result_gif = gr.Image(label="Rendered GIF", interactive=False)
+
+#===============================================================
+
+    none = gr.State(None)
+    save_folder = gr.State()
+    cond_image = gr.State()
+    views_image = gr.State()
+    text_image = gr.State()
+    
+    textgen_submit.click(
+        fn=stage_0_t2i, inputs=[text, none, textgen_seed, textgen_step], 
+        outputs=[rem_bg_image, save_folder],
+    ).success(
+        fn=stage_2_i2v, inputs=[rem_bg_image, textgen_SEED, textgen_STEP, save_folder], 
+        outputs=[views_image, cond_image, result_image],
+    ).success(
+        fn=stage_3_v23, inputs=[views_image, cond_image, textgen_SEED, save_folder, textgen_max_faces, textgen_do_texture_mapping, textgen_do_render_gif], 
+        outputs=[result_3dobj, result_3dglb],
+    ).success(
+        fn=stage_4_gif, inputs=[result_3dglb, save_folder, textgen_do_render_gif], 
+        outputs=[result_gif],
+    ).success(lambda: print('Text_to_3D Done ...'))
+
+    imggen_submit.click(
+        fn=stage_0_t2i, inputs=[none, input_image, textgen_seed, textgen_step], 
+        outputs=[text_image, save_folder],
+    ).success(
+        fn=stage_1_xbg, inputs=[text_image, save_folder], 
+        outputs=[rem_bg_image],
+    ).success(
+        fn=stage_2_i2v, inputs=[rem_bg_image, imggen_SEED, imggen_STEP, save_folder], 
+        outputs=[views_image, cond_image, result_image],
+    ).success(
+        fn=stage_3_v23, inputs=[views_image, cond_image, imggen_SEED, save_folder, imggen_max_faces, imggen_do_texture_mapping, imggen_do_render_gif], 
+        outputs=[result_3dobj, result_3dglb],
+    ).success(
+        fn=stage_4_gif, inputs=[result_3dglb, save_folder, imggen_do_render_gif], 
+        outputs=[result_gif],
+    ).success(lambda: print('Image_to_3D Done ...'))
+    
+#===============================================================
+
+    gr.Markdown(CONST_CITATION)
+    demo.queue(max_size=CONST_MAX_QUEUE)
+    demo.launch(server_name=CONST_SERVER, server_port=CONST_PORT)
+

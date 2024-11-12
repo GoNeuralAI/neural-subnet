@@ -14,7 +14,7 @@ import numpy as np
 from pytorch3d.structures import Meshes
 from fastapi import  HTTPException
 from torchvision import transforms
-from pytorch3d.renderer import TexturesUV
+from pytorch3d.renderer import TexturesUV, TexturesVertex
 
 DATA_DIR = './results'
 OUTPUT_DIR = './output_images'
@@ -46,6 +46,15 @@ def load_glb_as_mesh(glb_file, device='cpu'):
         
         # Create TexturesUV object
         textures = TexturesUV(maps=[texture_image], faces_uvs=[faces], verts_uvs=[uv_coords])
+    elif hasattr(mesh.visual, 'vertex_colors'):
+        vertex_colors = mesh.visual.vertex_colors
+        vertex_colors = torch.tensor(vertex_colors, dtype=torch.float32, device=device) / 255.0
+        # Separate RGB and Alpha
+        vertex_colors_rgb = vertex_colors[:, :3]
+        vertex_colors_alpha = vertex_colors[:, 3].unsqueeze(-1)
+        # Apply alpha to RGB
+        vertex_colors = vertex_colors_rgb * vertex_colors_alpha
+        textures = TexturesVertex(verts_features=[vertex_colors[:, :3]])
     else:
         # Fallback to a simple white texture if no texture is found
         textures = TexturesUV(maps=[torch.ones((1, 1, 3), dtype=torch.float32, device=device)], 
@@ -67,7 +76,7 @@ def load_image(image_buffer):
     return preprocess(image).unsqueeze(0).to(device)
 
 
-def render_mesh(obj_file: str, distance: float = 1.5, elevation: float = 15, azimuth: float = 0.0, 
+def render_mesh(obj_file: str, distance: float = 0.75, elevation: float = 15, azimuth: float = 0.0, 
                 image_size: int = 512, angle_step: int = 24):
     render_images = []
     before_render = []
@@ -135,6 +144,10 @@ def render_mesh(obj_file: str, distance: float = 1.5, elevation: float = 15, azi
             
             # Composite the image with transparency
             image = torch.cat([image, alpha], dim=0)  # Add alpha channel to the image
+            
+            # Save rendered images locally
+            # image_filename = os.path.join(OUTPUT_DIR, f'image_{angle}.png')
+            # save_image(image, image_filename)  # Save image
             
             # Convert to [H, W, C] format with RGBA
             ndarr = image.mul(255).clamp(0, 255).byte().numpy().transpose(1, 2, 0)

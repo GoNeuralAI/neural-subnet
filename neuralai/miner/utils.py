@@ -70,12 +70,13 @@ async def generate(self, synapse: bt.Synapse) -> bt.Synapse:
 
         abs_path = os.path.join('generate', result['path'])
         paths = {
-            "prev": os.path.join(abs_path, 'images/preview.png'),
-            "glb": os.path.join(abs_path, 'meshes/output.glb'),
+            "prev": os.path.join(abs_path, 'img.jpg'),
+            "glb": os.path.join(abs_path, 'mesh.glb'),
         }
 
         try:
             if S3_BUCKET_USE != "TRUE":
+                print(paths["prev"])
                 synapse.out_prev = base64.b64encode(read_file(paths["prev"])).decode('utf-8')
                 synapse.out_glb = base64.b64encode(read_file(paths["glb"])).decode('utf-8')
                 synapse.s3_addr = []

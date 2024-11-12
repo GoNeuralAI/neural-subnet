@@ -20,7 +20,7 @@ class Validation:
         self.init_model()
         
     def validate(self, data: ValidateRequest):
-        print("--- Validation started ---")
+        print("----------------- Validation started -----------------")
         start = time.time()
         prompt = data.prompt
         id = data.uid
@@ -34,10 +34,9 @@ class Validation:
         print(f"Q0: {Q0}")
         
         S0 = self.text_model.compute_clip_similarity_prompt(prompt, prev_img_path) if Q0 > 0.4 else 0
+        print(f"S0: {S0} - taken time: {time.time() - start}")
         if S0 < 0.23:
             return ValidateResponse(score=0)
-            
-        print(f"S0: {S0} - taken time: {time.time() - start}")
             
         Ri = self.detect_outliers([self.image_model.compute_clip_similarity(prev_img, img) for img in rendered_images])
         
@@ -51,21 +50,21 @@ class Validation:
         R_geo = np.exp(np.log(Ri).mean())
         Q_geo = np.exp(np.log(Qi).mean())
         
-        print("--------- Rendered images similarities with preview image --------")
+        print("---- Rendered images similarities with preview image ---")
         print(Ri)
         print(f"R_geo: {R_geo}")
         
-        print("--------- Rendered images similarities with text prompt ---------")
+        print("---- Rendered images similarities with text prompt ----")
         print(Si)
         print(f"S_geo: {S_geo}")
         
-        print("--------- Rendered images quality ---------")
+        print("---- Rendered images quality ----")
         print(Qi)
         print(f"Q_geo: {Q_geo}")
         
         total_score = S0 * 0.2 + S_geo * 0.35 + R_geo * 0.25 + Q_geo * 0.2
         
-        print(f"--------- Total Score: {total_score} ---------")
+        print(f"---- Total Score: {total_score} ----")
         
         if total_score < 0.35:
             return ValidateResponse(score=0)

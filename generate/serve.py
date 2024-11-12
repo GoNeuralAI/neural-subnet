@@ -1,239 +1,112 @@
 import os
-import argparse
-import numpy as np
 import torch
-import rembg
 import time
-import random
-import zipfile
-import uvicorn
-from io import BytesIO
 from PIL import Image
-from torchvision.transforms import v2
-from pytorch_lightning import seed_everything
-from omegaconf import OmegaConf
-from einops import rearrange, repeat
-from tqdm import tqdm
-from huggingface_hub import hf_hub_download
-from diffusers import DiffusionPipeline, EulerAncestralDiscreteScheduler
-
-from src.utils.train_util import instantiate_from_config
+import argparse
 from fastapi import FastAPI, HTTPException, Body
-from fastapi.responses import StreamingResponse
-from src.utils.camera_util import (
-    FOV_to_intrinsics, 
-    get_zero123plus_input_cameras,
-    get_circular_camera_poses,
-    get_render_cameras
-)
-from src.utils.mesh_util import save_obj, save_obj_with_mtl, convert_obj_to_glb
-from src.utils.infer_util import remove_background, resize_foreground, save_video, render_frames
+import uvicorn
 
-
-###############################################################################
-# Arguments.
-###############################################################################
-
-parser = argparse.ArgumentParser()
-parser.add_argument('config', type=str, help='Path to config file.')
-# parser.add_argument('input_path', type=str, help='Path to input image or directory.')
-parser.add_argument("--port", type=int, default=8093)
-parser.add_argument('--output_path', type=str, default='outputs/', help='Temporary output directory.')
-parser.add_argument('--diffusion_steps', type=int, default=75, help='Denoising Sampling steps.')
-parser.add_argument('--seed', type=int, default=42, help='Random seed for sampling.')
-parser.add_argument('--scale', type=float, default=1.0, help='Scale of generated object.')
-parser.add_argument('--distance', type=float, default=4.5, help='Render distance.')
-parser.add_argument('--view', type=int, default=6, choices=[4, 6], help='Number of input views.')
-parser.add_argument('--no_rembg', action='store_true', help='Do not remove input background.')
-parser.add_argument('--export_texmap', default=True, action='store_true', help='Export a mesh with texture map.')
-parser.add_argument('--save_video', action='store_true', help='Save a circular-view video.')
-args = parser.parse_args()
-seed_everything(args.seed)
-
+from infer import Text2Image, Removebg, Image2Views, Views2Mesh, GifRenderer
 
 app = FastAPI()
 
-###############################################################################
-# Stage 0: Configuration.
-###############################################################################
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--use_lite", default=False, action="store_true")
+    parser.add_argument("--mv23d_cfg_path", default="./svrm/configs/svrm.yaml", type=str)
+    parser.add_argument("--mv23d_ckt_path", default="weights/svrm/svrm.safetensors", type=str)
+    parser.add_argument("--text2image_path", default="weights/hunyuanDiT", type=str)
+    parser.add_argument("--save_folder", default="outputs/", type=str)
+    parser.add_argument("--device", default="cuda:0", type=str)
+    parser.add_argument("--t2i_seed", default=0, type=int)
+    parser.add_argument("--t2i_steps", default=25, type=int)
+    parser.add_argument("--gen_seed", default=0, type=int)
+    parser.add_argument("--gen_steps", default=50, type=int)
+    parser.add_argument("--max_faces_num", default=90000, type=int)
+    parser.add_argument("--save_memory", default=False, action="store_true")
+    parser.add_argument("--do_texture_mapping", default=False, action="store_true")
+    parser.add_argument("--do_render", default=False, action="store_true")
+    parser.add_argument("--port", default=8093, type=int)
+    return parser.parse_args()
 
-config = OmegaConf.load(args.config)
-config_name = os.path.basename(args.config).replace('.yaml', '')
-model_config = config.model_config
-infer_config = config.infer_config
+args = get_args()
 
-IS_FLEXICUBES = True if config_name.startswith('instant-mesh') else False
+# Initialize models globally
+rembg_model = Removebg()
+image_to_views_model = Image2Views(device=args.device, use_lite=args.use_lite)
+views_to_mesh_model = Views2Mesh(args.mv23d_cfg_path, args.mv23d_ckt_path, args.device, use_lite=args.use_lite)
+text_to_image_model = Text2Image(pretrain=args.text2image_path, device=args.device, save_memory=args.save_memory)
+if args.do_render:
+    gif_renderer = GifRenderer(device=args.device)
 
-device = torch.device('cuda')
+def process_image_to_3d(res_rgb_pil, output_folder):
+    os.makedirs(output_folder, exist_ok=True)
 
-# make output directories
-image_path = os.path.join(args.output_path, config_name, 'images')
-mesh_path = os.path.join(args.output_path, config_name, 'meshes')
-video_path = os.path.join(args.output_path, config_name, 'videos')
-os.makedirs(image_path, exist_ok=True)
-os.makedirs(mesh_path, exist_ok=True)
-os.makedirs(video_path, exist_ok=True)
+    # Stage 2: Remove Background
+    res_rgba_pil = rembg_model(res_rgb_pil)
+    res_rgb_pil.save(os.path.join(output_folder, "img_nobg.png"))
 
-# load playground v2.5 model
-pg_pipeline = DiffusionPipeline.from_pretrained(
-    "playgroundai/playground-v2.5-1024px-aesthetic",
-    torch_dtype=torch.float16,
-    variant="fp16",
-    ).to("cuda")
+    # Stage 3: Image to Views
+    (views_grid_pil, cond_img), view_pil_list = image_to_views_model(
+        res_rgba_pil,
+        seed=args.gen_seed,
+        steps=args.gen_steps
+    )
+    views_grid_pil.save(os.path.join(output_folder, "views.jpg"))
 
-# create remove_background session
-rembg_session = rembg.new_session()
+    # Stage 4: Views to Mesh
+    views_to_mesh_model(
+        views_grid_pil,
+        cond_img,
+        seed=args.gen_seed,
+        target_face_count=args.max_faces_num,
+        save_folder=output_folder,
+        do_texture_mapping=args.do_texture_mapping
+    )
 
-# load diffusion model
-print('Loading diffusion model ...')
-zero_pipeline = DiffusionPipeline.from_pretrained(
-    "sudo-ai/zero123plus-v1.2", 
-    custom_pipeline="zero123plus",
-    torch_dtype=torch.float16,
-)
-zero_pipeline.scheduler = EulerAncestralDiscreteScheduler.from_config(
-    zero_pipeline.scheduler.config, timestep_spacing='trailing'
-)
-
-# load custom white-background UNet
-print('Loading custom white-background unet ...')
-if os.path.exists(infer_config.unet_path):
-    unet_ckpt_path = infer_config.unet_path
-else:
-    unet_ckpt_path = hf_hub_download(repo_id="TencentARC/InstantMesh", filename="diffusion_pytorch_model.bin", repo_type="model")
-state_dict = torch.load(unet_ckpt_path, map_location='cpu')
-zero_pipeline.unet.load_state_dict(state_dict, strict=True)
-
-zero_pipeline = zero_pipeline.to(device)
-
-# load reconstruction model
-print('Loading reconstruction model ...')
-mesh_model = instantiate_from_config(model_config)
-if os.path.exists(infer_config.model_path):
-    model_ckpt_path = infer_config.model_path
-else:
-    model_ckpt_path = hf_hub_download(repo_id="TencentARC/InstantMesh", filename=f"{config_name.replace('-', '_')}.ckpt", repo_type="model")
-state_dict = torch.load(model_ckpt_path, map_location='cpu')['state_dict']
-state_dict = {k[14:]: v for k, v in state_dict.items() if k.startswith('lrm_generator.')}
-mesh_model.load_state_dict(state_dict, strict=True)
-
-
-mesh_model = mesh_model.to(device)
-if IS_FLEXICUBES:
-    mesh_model.init_flexicubes_geometry(device, fovy=30.0)
-mesh_model = mesh_model.eval()
-
-### text-to-mesh generation endpoint
-@app.post("/generate_from_text/")
-async def generate_mesh(prompt: str = Body()):
-    
-    print(prompt)
-    # generate image with text-to-image model
-    # Generate image with text-to-image model
-    main_image = await _generate_image(prompt)
-    
-    # Generate preview image from the main image
-    prev_images = await _generate_preview(main_image)
-
-    # Generate mesh object from preview images
-    await _generate_mesh(prev_images)
-
-    print(f"Successfully generated")
-
-    # If all steps succeed, return True
-    path = os.path.join(args.output_path, config_name)
-    
-    return {"success": True, "path": path}
-
-
-### image-to-mesh generation endpoint
-@app.post("/generate_from_image")
-async def generate_preview(input_image):
-    # generate preview image from the input image
-    prev_images = _generate_preview(input_image)
-
-    # generate mesh object from preview images
-    mesh_obj = _generate_mesh(prev_images)
-        
-    return mesh_obj
-
-# Generate image from prompt using playground v2.5 model
-async def _generate_image(prompt: str):
-    print('Generating main image')
-    image = pg_pipeline(
-        prompt=prompt, 
-        num_inference_steps=50, 
-        guidance_scale=3
-        ).images[0]
-    print('Main image generated')
-    
-    return image
-
-# Generate preview images with zero123plus model
-async def _generate_preview(input_image):
-    print('Generating preview images')
-    input_image = remove_background(input_image, rembg_session)
-    input_image.save(os.path.join(image_path, 'preview.png'))
-    
-    input_image = resize_foreground(input_image, 0.85)
-
-    prev_image = zero_pipeline(input_image, num_inference_step=args.diffusion_steps).images[0]
-    prev_images = np.asarray(prev_image, dtype=np.float32) / 255.0
-    prev_images = torch.from_numpy(prev_images).permute(2, 0, 1).contiguous().float()     # (3, 960, 640)
-    prev_images = rearrange(prev_images, 'c (n h) (m w) -> (n m) c h w', n=3, m=2)        # (6, 3, 320, 320)
-    # prev_image.save(os.path.join(image_path, 'preview.png'))
-    print('Preview images generated')
-
-    return prev_images
-
-# Generate mesh object from preview images
-async def _generate_mesh(input_images):
-    print('Generating mesh object...')
-    input_cameras = get_zero123plus_input_cameras(batch_size=1, radius=4.0*args.scale).to(device)
-    chunk_size = 20 if IS_FLEXICUBES else 1
-    input_images = input_images.unsqueeze(0).to(device)
-    input_images = v2.functional.resize(input_images, 320, interpolation=3, antialias=True).clamp(0, 1)
-    if args.view == 4:
-        indices = torch.tensor([0, 2, 4, 5]).long().to(device)
-        input_images = input_images[:, indices]
-        input_cameras = input_cameras[:, indices]
-
-    with torch.no_grad():
-        # get triplane
-        planes = mesh_model.forward_planes(input_images, input_cameras)
-
-        # get mesh
-        mesh_path_idx = os.path.join(mesh_path, f'output.obj')
-        mesh_path_glb = os.path.join(mesh_path, f'output.glb')
-
-        mesh_out = mesh_model.extract_mesh(
-            planes,
-            use_texture_map=args.export_texmap,
-            **infer_config,
+    # Stage 5: Render GIF
+    if args.do_render:
+        gif_renderer(
+            os.path.join(output_folder, 'mesh.obj'),
+            gif_dst_path=os.path.join(output_folder, 'output.gif'),
         )
 
-        print('Mesh object generated...')
+@app.post("/generate_from_text")
+async def text_to_3d(prompt: str = Body()):
+    output_folder = os.path.join(args.save_folder, "text_to_3d")
+    os.makedirs(output_folder, exist_ok=True)
 
-        # Generate texture map
-        if args.export_texmap:
-            vertices, faces, uvs, mesh_tex_idx, tex_map = mesh_out
-            try:
-                save_obj_with_mtl(
-                    vertices.data.cpu().numpy(),
-                    uvs.data.cpu().numpy(),
-                    faces.data.cpu().numpy(),
-                    mesh_tex_idx.data.cpu().numpy(),
-                    tex_map.permute(1, 2, 0).data.cpu().numpy(),
-                    mesh_path_idx,
-                )
-                convert_obj_to_glb(mesh_path_idx, mesh_path_glb)
-            except Exception as e:
-                return str(e)
-        else:
-            vertices, faces, vertex_colors = mesh_out
-            save_obj(vertices, faces, vertex_colors, mesh_path_idx)
-        print(f"Mesh saved to {mesh_path_idx}")
-    return
+    # Stage 1: Text to Image
+    start = time.time()
+    res_rgb_pil = text_to_image_model(
+        prompt,
+        seed=args.t2i_seed,
+        steps=args.t2i_steps
+    )
+    res_rgb_pil.save(os.path.join(output_folder, "img.jpg"))
+
+    process_image_to_3d(res_rgb_pil, output_folder)
+    
+    print(f"Successfully generated: {output_folder}")
+    print(f"Generation time: {time.time() - start}")
+
+    return {"success": True, "path": output_folder}
+
+    return {"message": "3D model generated successfully from text", "output_folder": output_folder}
+
+@app.post("/generate_from_image")
+async def image_to_3d(image_path: str):
+    if not os.path.exists(image_path):
+        raise HTTPException(status_code=400, detail="Image file not found")
+
+    output_folder = os.path.join(args.save_folder, "image_to_3d")
+    os.makedirs(output_folder, exist_ok=True)
+
+    # Load Image
+    res_rgb_pil = Image.open(image_path)
+    process_image_to_3d(res_rgb_pil, output_folder)
+
+    return {"message": "3D model generated successfully from image", "output_folder": output_folder}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=args.port)

@@ -168,3 +168,6 @@ validation/results
 node_modules
 package-lock.json
 package.json
+
+# Generation weights
+generate/weights
