@@ -50,7 +50,7 @@ def timing_decorator(category: str):
             end_time = time.time()
             elapsed_time = end_time - start_time
             func.call_count += 1
-            print(f"[HunYuan3D]-[{category}], cost time: {elapsed_time:.4f}s") # huiwen
+            print(f"[Generation]-[{category}], cost time: {elapsed_time:.4f}s") # huiwen
             return result
         return wrapper
     return decorator

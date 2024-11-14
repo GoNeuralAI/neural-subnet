@@ -9,6 +9,8 @@ from validation.quality_model import QualityModel
 from rendering import render, load_image
 
 DATA_DIR = './results'
+EXTRA_PROMPT = 'anime'
+
 
 
 class Validation:
@@ -22,7 +24,7 @@ class Validation:
     def validate(self, data: ValidateRequest):
         print("----------------- Validation started -----------------")
         start = time.time()
-        prompt = data.prompt
+        prompt = data.prompt + " " + EXTRA_PROMPT
         id = data.uid
         
         rendered_images, before_images = render(prompt, id)

@@ -92,8 +92,6 @@ async def text_to_3d(prompt: str = Body()):
 
     return {"success": True, "path": output_folder}
 
-    return {"message": "3D model generated successfully from text", "output_folder": output_folder}
-
 @app.post("/generate_from_image")
 async def image_to_3d(image_path: str):
     if not os.path.exists(image_path):

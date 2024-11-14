@@ -93,11 +93,11 @@ class Miner(BaseMinerNeuron):
                     )
                     return True, "Non-validator hotkey"
 
-            if check_validator(self, uid=uid, interval=int(self.config.miner.gen_interval)):
-                bt.logging.warning(
-                    f"Too many requests from {synapse.dendrite.hotkey}"
-                )
-                return True, "Non-validator hotkey"
+            # if check_validator(self, uid=uid, interval=int(self.config.miner.gen_interval)):
+            #     bt.logging.warning(
+            #         f"Too many requests from {synapse.dendrite.hotkey}"
+            #     )
+            #     return True, "Non-validator hotkey"
 
             bt.logging.trace(
                 f"Not Blacklisting recognized hotkey {synapse.dendrite.hotkey}"
