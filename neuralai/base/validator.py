@@ -253,7 +253,7 @@ class BaseValidatorNeuron(BaseNeuron):
         # Sort back to original order
         ranks.sort(key=lambda x: x[0])
         
-        self.scores = [(math.exp(-0.035 * rank) if score > 0 else 0) for id, rank, score in ranks]
+        self.scores = [(math.exp(-0.03 * rank) if score > 0 else 0) for id, rank, score in ranks]
         
         bt.logging.info(f"scores: {self.scores}")
 
@@ -404,7 +404,7 @@ class BaseValidatorNeuron(BaseNeuron):
 
         self.base_scores = np.where(self.base_scores < 1e-2, 0, self.base_scores)
         
-        bt.logging.debug(f"Updated moving avg base_scores: {self.base_scores}")
+        bt.logging.info(f"Updated moving avg base_scores: {self.base_scores}")
 
     def save_state(self):
         """Saves the state of the validator to a file."""

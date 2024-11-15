@@ -74,8 +74,16 @@ pm2 start python3 neurons/miner.py --netuid {netuid} --wallet.name {wallet} --wa
 #### Generation endpoint with PM2
 ```commandline
 cd generate
-pip install -r requirements.txt
-pm2 start serve.py --interpreter python3 --name endpoint -- configs/instant-mesh-large.yaml --port 8093 #{default local port 8093} 
+
+# create conda env
+conda create -n generation python=3.9
+conda activate generation
+
+pip install torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu121
+
+bash env_install.sh
+
+pm2 start "python3 serve.py --port 8093" --name generation_endpoint #{default local port 8093}
 ```
 
 ### Running Validators

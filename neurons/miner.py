@@ -32,10 +32,11 @@ class Miner(BaseMinerNeuron):
             return synapse
         self.generation_requests += 1
         
-        bt.logging.info(f"====== 3D Generation Started: {synapse.prompt_text} ======")
+        bt.logging.info(f"====== Received a task. Validator uid : {uid}, hotkey : {synapse.dendrite.hotkey} ======")
+        bt.logging.info(f"== {synapse.prompt_text} ==")
         
         set_status(self, "generation")
-        #send gpu id as a parameter for multi gpu
+        # Send gpu id as a parameter for multi gpu
         start = time.time()
         synapse = await generate(self, synapse)
         
