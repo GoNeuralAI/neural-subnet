@@ -82,6 +82,7 @@ conda activate generation
 bash env_install.sh
 
 # Then download the model using the following commands
+
 mkdir weights
 huggingface-cli download tencent/Hunyuan3D-1 --local-dir ./weights
 
@@ -113,7 +114,7 @@ cd validation
 
 pip install git+https://github.com/openai/CLIP.git
 pip install git+https://github.com/facebookresearch/pytorch3d.git
-(if you get an isseu with this, please run the command below
+(if you get an issue with this, please run the command below
 apt-get install python3-dev)
 
 pip install -r requirements.txt

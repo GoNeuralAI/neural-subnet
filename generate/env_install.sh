@@ -15,3 +15,5 @@ pip install git+https://github.com/NVlabs/nvdiffrast
 pip install open3d
 
 pip install fastapi
+
+pip install uvicorn
