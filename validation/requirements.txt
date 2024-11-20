@@ -5,7 +5,6 @@ scikit-image
 torch
 torchvision
 fastapi
-uvicorn
 transformers
 trimesh
 open-clip-torch==2.23.0

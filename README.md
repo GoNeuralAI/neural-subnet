@@ -79,9 +79,15 @@ cd generate
 conda create -n generation python=3.9
 conda activate generation
 
-pip install torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu121
-
 bash env_install.sh
+
+# Then download the model using the following commands
+mkdir weights
+huggingface-cli download tencent/Hunyuan3D-1 --local-dir ./weights
+
+mkdir weights/hunyuanDiT
+huggingface-cli download Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers-Distilled --local-dir ./weights/hunyuanDiT
+
 
 pm2 start "python3 serve.py --port 8093" --name generation_endpoint #{default local port 8093}
 ```
