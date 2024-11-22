@@ -47,15 +47,15 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             self.wandb_manager.wandb.finish()
             self.wandb_manager.init_wandb()
     
-    bt.logging.info("Checking Available Miners...")
+    bt.logging.info("Checking Available Miners.....")
     avail_uids = get_forward_uids(self, count=self.config.neuron.challenge_count)
     
-    bt.logging.info(f"Listed Miners: {avail_uids}")
+    bt.logging.info(f"Listed Miners Are: {avail_uids}")
     
     forward_uids = self.miner_manager.get_miner_status(uids=avail_uids)
     
     if len(forward_uids) == 0:
-        bt.logging.warning("No Miners Available!")
+        bt.logging.warning("No Miners Are Available!")
         val_scores = [0 for _ in avail_uids] 
         self.update_scores(val_scores, avail_uids)
     else:
