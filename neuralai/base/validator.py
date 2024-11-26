@@ -402,7 +402,7 @@ class BaseValidatorNeuron(BaseNeuron):
             if scattered_rewards[i] != -1:
                 self.base_scores[i] = alpha * (0 if scattered_rewards[i] < 0.1 else scattered_rewards[i]) + (1 - alpha) * self.base_scores[i]
 
-        self.base_scores = np.where(self.base_scores < 1e-2, 0, self.base_scores)
+        self.base_scores = np.where(self.base_scores < 4e-2, 0, self.base_scores)
         
         bt.logging.info(f"Updated moving avg base_scores: {self.base_scores}")
 

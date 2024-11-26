@@ -64,7 +64,7 @@ class Validation:
         print(Qi)
         print(f"Q_geo: {Q_geo}")
         
-        total_score = S0 * 0.2 + S_geo * 0.35 + R_geo * 0.25 + Q_geo * 0.2
+        total_score = S0 * 0.2 + S_geo * 0.4 + R_geo * 0.3 + Q_geo * 0.1
         
         print(f"---- Total Score: {total_score} ----")
         

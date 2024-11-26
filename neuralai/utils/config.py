@@ -261,7 +261,7 @@ def add_validator_args(cls, parser):
         "--neuron.challenge_count",
         type=int,
         help="The miner challenge count at once",
-        default=20,
+        default=40,
     )
 
 def config(cls):

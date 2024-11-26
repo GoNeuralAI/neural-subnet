@@ -161,6 +161,8 @@ cython_debug/
 
 testing/
 validation/results
+validation/test
+generate/outputs
 
 # Editors
 .vscode/settings.json
