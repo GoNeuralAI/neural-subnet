@@ -28,6 +28,7 @@ async def validate(val_url: str, prompt: str, uid: int, timeout: float):
         except Exception as e:
             bt.logging.error(f"Error occurred: {e} ({val_url})")
             return {'score': 0}        
+        return {'score': 0}        
     
     return {'score': 0}
 
