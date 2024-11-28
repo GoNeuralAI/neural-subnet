@@ -171,5 +171,8 @@ node_modules
 package-lock.json
 package.json
 
+app.config.js
+validation.config.js
+
 # Generation weights
 generate/weights

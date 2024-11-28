@@ -16,8 +16,8 @@ from fastapi import  HTTPException
 from torchvision import transforms
 from pytorch3d.renderer import TexturesUV, TexturesVertex
 
-DATA_DIR = './results'
-OUTPUT_DIR = './output_images'
+DATA_DIR = './validation/results'
+OUTPUT_DIR = './validation/output_images'
 
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
