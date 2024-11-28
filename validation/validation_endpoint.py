@@ -8,7 +8,7 @@ from validation.quality_model import QualityModel
 
 from rendering import render, load_image
 
-DATA_DIR = './results'
+DATA_DIR = './validation/results'
 EXTRA_PROMPT = 'anime'
 
 
