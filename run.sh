@@ -188,6 +188,7 @@ fi
 branch=$(git branch --show-current)            # get current branch.
 echo watching branch: $branch
 echo pm2 process name: $proc_name
+echo pm2 process name: $vali_name
 
 # Get the current version locally.
 current_version=$(read_version_value)
@@ -196,6 +197,12 @@ current_version=$(read_version_value)
 if pm2 status | grep -q $proc_name; then
     echo "The script is already running with pm2. Stopping and restarting..."
     pm2 delete $proc_name
+fi
+
+# Check if script is already running with pm2
+if pm2 status | grep -q $vali_name; then
+    echo "The script is already running with pm2. Stopping and restarting..."
+    pm2 delete $vali_name
 fi
 
 # Run the Python script with the arguments using pm2
@@ -296,7 +303,7 @@ if [ "$?" -eq 1 ]; then
         # Wait about 30 minutes
         # This should be plenty of time for validators to catch up
         # and should prevent any rate limitations by GitHub.
-        sleep 240
+        sleep 1800
     done
 else
     echo "Missing package 'jq'. Please install it for your system first."
