@@ -275,7 +275,7 @@ if [ "$?" -eq 1 ]; then
 
                     # # Run the Python script with the arguments using pm2
                     # TODO (shib): Remove this pm2 del in the next spec version update.
-                    pm2 del neural_validator_autoupdate
+                    # pm2 del neural_validator_autoupdate
                     echo "Restarting PM2 process"
                     pm2 restart $proc_name
 
@@ -302,7 +302,7 @@ if [ "$?" -eq 1 ]; then
         # Wait about 30 minutes
         # This should be plenty of time for validators to catch up
         # and should prevent any rate limitations by GitHub.
-        sleep 300
+        sleep 120
     done
 else
     echo "Missing package 'jq'. Please install it for your system first."
