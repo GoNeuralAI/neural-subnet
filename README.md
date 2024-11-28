@@ -64,6 +64,10 @@ git clone https://github.com/GoNeuralAI/neural-subnet/
 cd neural-subnet
 ```
 2. Install pm2 if you don't have it [pm2.io](https://pm2.io/docs/runtime/guide/installation/).
+
+```commandline
+sudo apt install npm && sudo npm install pm2 -g && pm2 update
+```
 3. Then install the `Neural` package: `pip install -e .`
 
 #### Run Miner with PM2
@@ -100,13 +104,13 @@ pm2 start "python3 serve.py --port 8093" --name generation_endpoint #{default lo
 git clone https://github.com/GoNeuralAI/neural-subnet/
 cd neural-subnet
 ```
-2. Install pm2 if you don't have it [pm2.io](https://pm2.io/docs/runtime/guide/installation/).
-3. Then install the `Neural` package: `pip install -e .`
+2. Install pm2 and jq package if you don't have it [pm2.io](https://pm2.io/docs/runtime/guide/installation/).
 
-#### Run Validator with PM@
 ```commandline
-pm2 start python3 neurons/validator.py --netuid {netuid} --wallet.name {wallet} --wallet.hotkey {hotkey} --axon.port {port}
+sudo apt update && sudo apt install jq
+sudo apt install npm && sudo npm install pm2 -g && pm2 update
 ```
+3. Then install the `Neural` package: `pip install -e .`
 
 #### Validation endpoint with PM2
 ```commandline
@@ -118,7 +122,11 @@ pip install git+https://github.com/facebookresearch/pytorch3d.git
 apt-get install python3-dev)
 
 pip install -r requirements.txt
-pm2 start serve.py --interpreter python3 -- --port {port #default local port 8094} 
+```
+
+#### Run Validator with PM@
+```commandline
+pm2 start run.sh --name neural_validator_autoupdate --netuid {46} --wallet.name {wallet} --wallet.hotkey {hotkey} --axon.port {port} --logging.debug
 ```
 
 ## Benefit and use cases

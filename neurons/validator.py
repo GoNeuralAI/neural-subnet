@@ -30,6 +30,8 @@ class Validator(BaseValidatorNeuron):
         self.task_manager = TaskManager()
         self.miner_manager = MinerManager(validator=self)
         self.wandb_manager = WandbManager(validator=self)
+        
+        bt.logging.info(f"Validator Spec Version: {self.validator.spec_version}")
 
         # TODO(developer): Anything specific to your use case you can do here
 

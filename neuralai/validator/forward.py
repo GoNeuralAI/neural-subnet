@@ -17,7 +17,7 @@ async def handle_response(response, uid, config, nas_prompt_text):
     except ValueError as e:
         print(f"Error saving files for response {uid}: {e}")
 
-    result = await utils.validate(config.validation.endpoint, nas_prompt_text, int(uid), timeout=config.neuron.task_period * 0.6)
+    result = await utils.validate(config.validation.endpoint, nas_prompt_text, int(uid), timeout=config.neuron.task_period * 0.4)
     process_time = response.dendrite.process_time
     return result['score'], (process_time if process_time and process_time > 10 else 0)
 
