@@ -1,6 +1,7 @@
 import os
 import time
 import numpy as np
+from fastapi import HTTPException
 from models import ValidateRequest, ValidateResponse
 from validation.text_clip_model import TextModel
 from validation.image_clip_model import ImageModel
@@ -73,8 +74,7 @@ class Validation:
                 return ValidateResponse(score=0)
             return ValidateResponse(score=total_score)
         except Exception as e:
-            print(f"Error in validation process: {str(e)}")
-            return ValidateResponse(score=0)
+            raise HTTPException(status_code=500, detail=str(e))
         
     def detect_outliers(self, data, threshold=1.1):
         # Calculate Q1 and Q3

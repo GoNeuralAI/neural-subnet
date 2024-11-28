@@ -26,7 +26,7 @@ async def validate(val_url: str, prompt: str, uid: int, timeout: float):
         except aiohttp.ClientError as e:
             bt.logging.error(f"Client error occurred: {e} ({val_url})")
         except Exception as e:
-            bt.logging.error(f"Error occurred: {e} ({val_url})")
+            bt.logging.error(f"Critical Error occurred: {e} ({val_url})")
             return {'score': 0}        
         return {'score': 0}        
     
