@@ -275,7 +275,7 @@ if [ "$?" -eq 1 ]; then
 
                     # # Run the Python script with the arguments using pm2
                     # TODO (shib): Remove this pm2 del in the next spec version update.
-                    pm2 del auto_run_validator
+                    pm2 del neural_validator_autoupdate
                     echo "Restarting PM2 process"
                     pm2 restart $proc_name
 
