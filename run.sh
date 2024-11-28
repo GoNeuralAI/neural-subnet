@@ -3,11 +3,11 @@
 # Initialize variables
 script="neurons/validator.py"
 autoRunLoc=$(readlink -f "$0")
-proc_name="neural_validator_main_process" 
+proc_name="neural_validator_main_process"
+vali_name="neural_validation_endpoint"
 args=()
 version_location="./neuralai/__init__.py"
 version="__version__"
-delay=0 # Default delay value in hours
 
 old_args=$@
 
@@ -147,6 +147,7 @@ strip_quotes() {
 
     echo "$stripped"
 }
+
 # Loop through all command line arguments
 while [[ $# -gt 0 ]]; do
   arg="$1"
@@ -155,30 +156,23 @@ while [[ $# -gt 0 ]]; do
   if [[ "$arg" == -* ]]; then
     # Check if the argument has a value
     if [[ $# -gt 1 && "$2" != -* ]]; then
-      case "$arg" in
-        --script)
-          script="$2"
-          shift 2
-          ;;
-        --delay) # Handle delay argument
-          delay=$(($2 * 3600))
-          shift 2
-          ;;
-        *)
-          # Add '=' sign between flag and value
-          args+=("'$arg'")
-          args+=("'$2'")
-          shift 2
-          ;;
-      esac
+          if [[ "$arg" == "--script" ]]; then
+            script="$2";
+            shift 2
+        else
+            # Add '=' sign between flag and value
+            args+=("'$arg'");
+            args+=("'$2'");
+            shift 2
+        fi
     else
       # Add '=True' for flags with no value
-      args+=("'$arg'")
+      args+=("'$arg'");
       shift
     fi
   else
     # Argument is not a flag, add it as it is
-    args+=("'$arg '")
+    args+=("'$arg '");
     shift
   fi
 done
@@ -194,8 +188,6 @@ fi
 branch=$(git branch --show-current)            # get current branch.
 echo watching branch: $branch
 echo pm2 process name: $proc_name
-
-
 
 # Get the current version locally.
 current_version=$(read_version_value)
@@ -234,7 +226,7 @@ pm2 start app.config.js
 
 echo "module.exports = {
   apps : [{
-    name   : 'neural_validation_endpoint',
+    name   : '$vali_name',
     script : 'validation/serve.py',
     interpreter: 'python3',
     min_uptime: '5m',
@@ -278,6 +270,7 @@ if [ "$?" -eq 1 ]; then
                     # pm2 del neural_validator_autoupdate
                     echo "Restarting PM2 process"
                     pm2 restart $proc_name
+                    pm2 restart $vali_name
 
                     # Update current version:
                     current_version=$(read_version_value)
