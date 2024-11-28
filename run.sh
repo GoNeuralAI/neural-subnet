@@ -270,6 +270,7 @@ if [ "$?" -eq 1 ]; then
                     # pm2 del neural_validator_autoupdate
                     echo "Restarting PM2 process"
                     pm2 restart $proc_name
+                    echo "Restarting validtion endpoint"
                     pm2 restart $vali_name
 
                     # Update current version:
