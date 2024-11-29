@@ -10,6 +10,8 @@ from neuralai.validator.reward import (
 )
 from neuralai.utils.uids import get_forward_uids
 from neuralai.validator import utils
+from neuralai import __version__ as version
+
 
 async def handle_response(response, uid, config, nas_prompt_text):
     try:
@@ -17,7 +19,7 @@ async def handle_response(response, uid, config, nas_prompt_text):
     except ValueError as e:
         print(f"Error saving files for response {uid}: {e}")
 
-    result = await utils.validate(config.validation.endpoint, nas_prompt_text, int(uid), timeout=config.neuron.task_period * 0.4)
+    result = await utils.validate(config.validation.endpoint, nas_prompt_text, int(uid), timeout=config.neuron.task_period / 3 * 2)
     process_time = response.dendrite.process_time
     return result['score'], (process_time if process_time and process_time > 10 else 0)
 
@@ -47,6 +49,8 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             self.wandb_manager.wandb.finish()
             self.wandb_manager.init_wandb()
     
+    bt.logging.info('=' * 60)
+    bt.logging.inf(f"New Epoch v{version}")
     bt.logging.info("Checking Available Miners.....")
     avail_uids = get_forward_uids(self, count=self.config.neuron.challenge_count)
     
@@ -68,7 +72,7 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             nas = synapse
         else:
             task = await self.task_manager.prepare_task()
-            nas = NATextSynapse(prompt_text=task, timeout=loop_time * 0.4)
+            nas = NATextSynapse(prompt_text=task, timeout=loop_time / 3)
             
         if nas.prompt_text:
             # The dendrite client queries the network.
@@ -81,7 +85,7 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
                 axons=[self.metagraph.axons[uid] for uid in forward_uids],
                 # Construct a dummy query. This simply contains a single integer.
                 synapse=nas,
-                timeout=loop_time * 0.4,
+                timeout=loop_time / 3,
                 # All responses have the deserialize function called on them before returning.
                 # You are encouraged to define your own deserialization function.
                 deserialize=False,
@@ -126,5 +130,5 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     
     if taken_time < loop_time:
         bt.logging.info(f"== Taken Time: {taken_time:.1f}s | Sleeping For {loop_time - taken_time:.1f}s ==")
-        bt.logging.info('=' * 50)
+        bt.logging.info('=' * 60)
         time.sleep(loop_time - taken_time)

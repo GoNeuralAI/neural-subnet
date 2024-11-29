@@ -171,7 +171,7 @@ def add_miner_args(cls, parser):
         "--miner.gen_interval",
         type=int,
         help="The interval to limit the number of requests",
-        default=200,
+        default=240,
     )
 
 def add_validator_args(cls, parser):
@@ -188,7 +188,7 @@ def add_validator_args(cls, parser):
         "--neuron.task_period",
         type=float,
         help="The timeout for each forward call in seconds.",
-        default=200,
+        default=240,
     )
 
     parser.add_argument(
@@ -233,7 +233,7 @@ def add_validator_args(cls, parser):
         "--validator.time_rate",
         type=float,
         help="The miner challenge count at once",
-        default=0.07,
+        default=0.05,
     )
 
     parser.add_argument(
@@ -261,7 +261,7 @@ def add_validator_args(cls, parser):
         "--neuron.challenge_count",
         type=int,
         help="The miner challenge count at once",
-        default=40,
+        default=30,
     )
 
 def config(cls):

@@ -10,7 +10,7 @@ async def validate(val_url: str, prompt: str, uid: int, timeout: float):
     url = urllib.parse.urljoin(val_url, "/validate/")
     async with aiohttp.ClientSession() as session:
         try:
-            client_timeout = aiohttp.ClientTimeout(total=timeout/2)
+            client_timeout = aiohttp.ClientTimeout(total=timeout)
             async with session.post(url, timeout=client_timeout, json={"prompt": prompt, "uid": uid}) as response:
                 if response.status == 200:
                     results = await response.json()

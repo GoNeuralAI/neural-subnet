@@ -3,8 +3,8 @@
 # Initialize variables
 script="neurons/validator.py"
 autoRunLoc=$(readlink -f "$0")
-proc_name="neural_validator_main_process"
-vali_name="neural_validation_endpoint"
+proc_name="neural_validator"
+vali_name="neural_v_endpoint"
 args=()
 version_location="./neuralai/__init__.py"
 version="__version__"

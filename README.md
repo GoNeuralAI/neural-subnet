@@ -126,7 +126,7 @@ pip install -r requirements.txt
 
 #### Run Validator with PM@
 ```commandline
-pm2 start run.sh --name neural_validator_autoupdate --netuid {46} --wallet.name {wallet} --wallet.hotkey {hotkey} --axon.port {port} --logging.debug
+pm2 start run.sh --name neural_v_autoupdate_ --netuid {46} --wallet.name {wallet} --wallet.hotkey {hotkey} --axon.port {port} --logging.debug
 ```
 
 ## Benefit and use cases
