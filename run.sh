@@ -251,7 +251,7 @@ check_package_installed "jq"
 if [ "$?" -eq 1 ]; then
     # Add this at the beginning of the script, before the while loop
     last_restart_time=$(date +%s)
-    restart_interval=$((9 * 3600))  # 12 hours in seconds
+    restart_interval=$((30 * 3600))  # 30 hours in seconds
 
     while true; do
         # Get current time
@@ -307,9 +307,9 @@ if [ "$?" -eq 1 ]; then
                 echo "**Skipping update **"
                 echo "$current_version is the same as or more than $latest_version. You are likely running locally."
 
-                # Check if 12 hours have passed since last restart
+                # Check if 30 hours have passed since last restart
                 if [ $time_since_last_restart -ge $restart_interval ]; then
-                    echo "12 hours passed. Performing periodic PM2 restart..."
+                    echo "30 hours passed. Performing periodic PM2 restart..."
                     pm2 restart $proc_name
                     
                     echo "Restarting validation endpoint"
