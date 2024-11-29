@@ -249,7 +249,14 @@ pm2 start validation.config.js
 # Check if packages are installed.
 check_package_installed "jq"
 if [ "$?" -eq 1 ]; then
+    # Add this at the beginning of the script, before the while loop
+    last_restart_time=$(date +%s)
+    restart_interval=$((12 * 3600))  # 12 hours in seconds
+
     while true; do
+        # Get current time
+        current_time=$(date +%s)
+        time_since_last_restart=$((current_time - last_restart_time))
 
         # First ensure that this is a git installation
         if [ -d "./.git" ]; then
@@ -277,12 +284,16 @@ if [ "$?" -eq 1 ]; then
                     # pm2 del neural_validator_autoupdate
                     echo "Restarting PM2 process"
                     pm2 restart $proc_name
+                    
                     echo "Restarting validtion endpoint"
                     pm2 restart $vali_name
 
                     # Update current version:
                     current_version=$(read_version_value)
                     echo ""
+
+                    # Update last restart time
+                    last_restart_time=$current_time
 
                     # Restart autorun script
                     echo "Restarting script..."
@@ -295,6 +306,16 @@ if [ "$?" -eq 1 ]; then
             else
                 echo "**Skipping update **"
                 echo "$current_version is the same as or more than $latest_version. You are likely running locally."
+
+                # Check if 12 hours have passed since last restart
+                if [ $time_since_last_restart -ge $restart_interval ]; then
+                    echo "12 hours passed. Performing periodic PM2 restart..."
+                    pm2 restart $proc_name
+                    
+                    echo "Restarting validation endpoint"
+                    pm2 restart $vali_name
+                    last_restart_time=$current_time
+                    echo "Periodic restart completed"
             fi
         else
             echo "The installation does not appear to be done through Git. Please install from source at https://github.com/opentensor/validators and rerun this script."
