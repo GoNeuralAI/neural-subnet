@@ -251,7 +251,7 @@ check_package_installed "jq"
 if [ "$?" -eq 1 ]; then
     # Add this at the beginning of the script, before the while loop
     last_restart_time=$(date +%s)
-    restart_interval=$((12 * 3600))  # 12 hours in seconds
+    restart_interval=$((9 * 3600))  # 12 hours in seconds
 
     while true; do
         # Get current time
