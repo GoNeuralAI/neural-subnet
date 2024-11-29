@@ -316,6 +316,7 @@ if [ "$?" -eq 1 ]; then
                     pm2 restart $vali_name
                     last_restart_time=$current_time
                     echo "Periodic restart completed"
+                fi
             fi
         else
             echo "The installation does not appear to be done through Git. Please install from source at https://github.com/opentensor/validators and rerun this script."
