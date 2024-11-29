@@ -50,7 +50,7 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             self.wandb_manager.init_wandb()
     
     bt.logging.info('=' * 60)
-    bt.logging.inf(f"New Epoch v{version}")
+    bt.logging.info(f"New Epoch v{version}")
     bt.logging.info("Checking Available Miners.....")
     avail_uids = get_forward_uids(self, count=self.config.neuron.challenge_count)
     
