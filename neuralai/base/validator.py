@@ -254,7 +254,7 @@ class BaseValidatorNeuron(BaseNeuron):
         ranks.sort(key=lambda x: x[0])
         
         # self.scores = [(math.exp(-0.03 * rank) if score > 0 else 0) for id, rank, score in ranks]
-        self.scores = [(score * score if score > 0 else 0) for score in self.base_scores]
+        self.scores = [(score ** 4 if score > 2e-1 else 0) for score in self.base_scores]
         
         bt.logging.info(f"scores: {self.scores}")
 
