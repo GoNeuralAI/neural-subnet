@@ -13,13 +13,13 @@ from neuralai.validator import utils
 from neuralai import __version__ as version
 
 
-async def handle_response(response, uid, config, nas_prompt_text):
+async def handle_response(response, uid, config, nas_prompt_text, timeout):
     try:
         utils.save_synapse_files(response, uid)
     except ValueError as e:
         print(f"Error saving files for response {uid}: {e}")
 
-    result = await utils.validate(config.validation.endpoint, nas_prompt_text, int(uid), timeout=config.neuron.task_period / 3 * 2)
+    result = await utils.validate(config.validation.endpoint, nas_prompt_text, int(uid), timeout=timeout)
     process_time = response.dendrite.process_time
     return result['score'], (process_time if process_time and process_time > 10 else 0)
 
@@ -96,7 +96,7 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             start_vali_time = time.time()
             
             tasks = [
-                handle_response(response, forward_uids[index], self.config, nas.prompt_text)
+                handle_response(response, forward_uids[index], self.config, nas.prompt_text, loop_time-timeout)
                 for index, response in enumerate(responses)
             ]
             results = await asyncio.gather(*tasks)
