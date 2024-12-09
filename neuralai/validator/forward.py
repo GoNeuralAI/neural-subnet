@@ -40,6 +40,7 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     """
     start_time = time.time()
     loop_time = self.config.neuron.task_period
+    timeout = loop_time / 5
     val_scores = []
     
     # wandb
@@ -72,7 +73,7 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             nas = synapse
         else:
             task = await self.task_manager.prepare_task()
-            nas = NATextSynapse(prompt_text=task, timeout=loop_time * 2 / 15)
+            nas = NATextSynapse(prompt_text=task, timeout=timeout)
             
         if nas.prompt_text:
             # The dendrite client queries the network.
@@ -85,7 +86,7 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
                 axons=[self.metagraph.axons[uid] for uid in forward_uids],
                 # Construct a dummy query. This simply contains a single integer.
                 synapse=nas,
-                timeout=loop_time * 2 / 15,
+                timeout=timeout,
                 # All responses have the deserialize function called on them before returning.
                 # You are encouraged to define your own deserialization function.
                 deserialize=False,
