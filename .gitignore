@@ -176,3 +176,4 @@ validation.config.js
 
 # Generation weights
 generate/weights
+validation/test.py

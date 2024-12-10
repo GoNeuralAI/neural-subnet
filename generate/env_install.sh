@@ -17,3 +17,7 @@ pip install open3d
 pip install fastapi
 
 pip install uvicorn
+
+pip install onnxruntime
+
+pip install typeguard
