@@ -110,7 +110,6 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             bt.logging.info("=== 3D Object Validation Scores ===", np.round(scores, 3))
             scores = get_rewards(process_time, avail_uids, forward_uids)
             f_time_scores = normalize(scores)
-            bt.logging.info("=== Generation Time Scores ===", np.round(scores, 3))
             
             # Considered with the generation time score 0.1
             final_scores = [s * (1 - time_rate) + time_rate * (1 - t) if t else s for t, s in zip(f_time_scores, f_val_scores)]
