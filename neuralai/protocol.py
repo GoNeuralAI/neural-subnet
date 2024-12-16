@@ -15,6 +15,22 @@ class NATextSynapse(bt.Synapse):
         title="Prompt",
         description="Text prompt for 3d generation"
     )
+    negative_prompt: str = pydantic.Field(
+        default="",
+        title="Negative Prompt",
+        description="Text negative prompt for 3d generation"
+    )
+    seed: int = pydantic.Field(
+        default=100,
+        title="Seed",
+        description="Seed for 3d generation"
+    )
+    # Query response timeout
+    face_limit: int = pydantic.Field(
+        default=500,
+        title="Face Limit",
+        description="Face limit for 3d generation"
+    )
     # Optional request output, filled by receiving axon.
     out_prev: str = pydantic.Field(
         default="prev",
@@ -27,7 +43,6 @@ class NATextSynapse(bt.Synapse):
         title="3d Object",
         description="3d object file"
     )
-    # Query response timeout
     timeout: int = pydantic.Field(
         default=80,
         title="Generation Timeout",
