@@ -97,7 +97,7 @@ class BaseValidatorNeuron(BaseNeuron):
 
             self.axon.attach(
                 forward_fn=self.forward_fn,
-                blacklist_fn=self.blacklist_fn,
+                blacklist_fn=self.whitelist_fn,
                 priority_fn=self.priority_fn,
             )
             try:

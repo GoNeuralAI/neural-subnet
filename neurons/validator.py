@@ -50,12 +50,8 @@ class Validator(BaseValidatorNeuron):
         time.sleep(5)
         return await self.forward(synapse)
     
-    async def blacklist_fn(self, synapse: NATextSynapse) -> Tuple[bool, str]:
-        # TODO add hotkeys to blacklist here as needed
-        # blacklist the hotkeys mining on the subnet to prevent any potential issues
-        #hotkeys_to_blacklist = [h for i,h in enumerate(self.hotkeys) if self.metagraph.S[i] < 20000 and h != self.wallet.hotkey.ss58_address]
-        #if synapse.dendrite.hotkey in hotkeys_to_blacklist:
-        #    return True, "Blacklisted hotkey - miners can't connect, use a diff hotkey."
+    async def whitelist_fn(self, synapse: NATextSynapse) -> Tuple[bool, str]:
+        
         return False, ""
 
     async def priority_fn(self, synapse: NATextSynapse) -> float:
