@@ -107,4 +107,5 @@ async def image_to_3d(image_path: str):
     return {"message": "3D model generated successfully from image", "output_folder": output_folder}
 
 if __name__ == "__main__":
+    
     uvicorn.run(app, host="0.0.0.0", port=args.port)

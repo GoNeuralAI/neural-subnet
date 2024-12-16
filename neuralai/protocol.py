@@ -19,7 +19,7 @@ class NATextSynapse(bt.Synapse):
     out_prev: str = pydantic.Field(
         default="prev",
         title="Preview Image",
-        description="Based64 encoded preview image"
+        description="Base64 encoded preview image"
     )
     # output obj, supported format is .obj
     out_glb: str = pydantic.Field(
@@ -29,7 +29,7 @@ class NATextSynapse(bt.Synapse):
     )
     # Query response timeout
     timeout: int = pydantic.Field(
-        default="300",
+        default=80,
         title="Generation Timeout",
         description="3d generation timeout for synapse"
     )
