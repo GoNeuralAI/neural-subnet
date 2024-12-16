@@ -21,13 +21,12 @@ class NATextSynapse(bt.Synapse):
         description="Text negative prompt for 3d generation"
     )
     seed: int = pydantic.Field(
-        default=100,
+        default=0,
         title="Seed",
         description="Seed for 3d generation"
     )
-    # Query response timeout
     face_limit: int = pydantic.Field(
-        default=500,
+        default=90000,
         title="Face Limit",
         description="Face limit for 3d generation"
     )
