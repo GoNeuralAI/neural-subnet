@@ -51,8 +51,10 @@ class Validator(BaseValidatorNeuron):
         return await self.forward(synapse)
     
     async def whitelist_fn(self, synapse: NATextSynapse) -> Tuple[bool, str]:
-        
-        return False, ""
+        if synapse.dendrite and synapse.dendrite.hotkey in self.white_list:
+            bt.logging.debug("Received a request legit owner hotkey.")
+            return False, ""
+        return True, "The dendrite missed hotkey or not the owner's hotkey"
 
     async def priority_fn(self, synapse: NATextSynapse) -> float:
         # high priority for organic traffic
