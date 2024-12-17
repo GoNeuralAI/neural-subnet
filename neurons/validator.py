@@ -11,7 +11,10 @@ from neuralai.protocol import NATextSynapse
 from neuralai.validator.task_manager import TaskManager
 from neuralai.validator.miner_manager import MinerManager
 from neuralai.validator.wandb_manager import WandbManager
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
 class Validator(BaseValidatorNeuron):
     """
@@ -51,7 +54,9 @@ class Validator(BaseValidatorNeuron):
         return await self.forward(synapse)
     
     async def whitelist_fn(self, synapse: NATextSynapse) -> Tuple[bool, str]:
-        if synapse.dendrite and synapse.dendrite.hotkey in self.white_list:
+        
+        owner_hotkey = os.getenv("OWNER_HOTKEY")
+        if synapse.dendrite and synapse.dendrite.hotkey == owner_hotkey:
             bt.logging.debug("Received a request legit owner hotkey.")
             return False, ""
         return True, "The dendrite missed hotkey or not the owner's hotkey"

@@ -232,7 +232,7 @@ def add_validator_args(cls, parser):
     parser.add_argument(
         "--validator.time_rate",
         type=float,
-        help="The miner challenge count at once",
+        help="The time period of one ephoch in the validator side",
         default=0.05,
     )
 
@@ -258,10 +258,17 @@ def add_validator_args(cls, parser):
     )
     
     parser.add_argument(
-        "--neuron.challenge_count",
+        "--neuron.synthetic_challenge_count",
         type=int,
-        help="The miner challenge count at once",
+        help="The miner challenge count for synthetic synapse at once",
         default=25,
+    )
+
+    parser.add_argument(
+        "--neuron.organic_challenge_count",
+        type=int,
+        help="The miner challenge count for organic synapse at once",
+        default=100,
     )
 
 def config(cls):
