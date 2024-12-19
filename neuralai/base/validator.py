@@ -102,7 +102,7 @@ class BaseValidatorNeuron(BaseNeuron):
             )
             try:
                 self.axon.serve(netuid=self.config.netuid, subtensor=self.subtensor)
-                # self.axon.start()
+                self.axon.start()
                 bt.logging.info(
                     f"Running validator {self.axon} on network: {self.config.subtensor.chain_endpoint} with netuid: {self.config.netuid}"
                 )

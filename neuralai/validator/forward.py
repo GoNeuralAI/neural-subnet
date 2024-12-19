@@ -53,15 +53,17 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
     try:
         if synapse: # This is the organic synapse
             
-            if synapse.prompt is None:
+            if synapse.prompt_text is None:
                 raise Exception("None prompt of organic synapse.")
             
             nas = NATextSynapse(prompt_text = synapse.prompt_text, timeout = timeout)
             
             bt.logging.info("============================ Sending the organic synapse ============================")
-            avail_uids = get_organic_forward_uids(self, conunt = self.config.neuron.organic_challenge_count)
+            avail_uids = get_organic_forward_uids(self, self.config.neuron.organic_challenge_count)
             bt.logging.info(f"Listed Miners Are: {avail_uids}")
-            sorted_uids = sorted(self.miner_manager.get_miner_status(uids=avail_uids), key=lambda uid: avail_uids.index(uid))
+            ping_uids = self.miner_manager.get_miner_status(uids=avail_uids)
+            print(ping_uids)
+            sorted_uids = sorted(ping_uids, key=lambda uid: avail_uids.index(uid))
             bt.logging.info(f"Forward uids are: {sorted_uids}")
             
             if len(sorted_uids) < 1:
@@ -82,18 +84,18 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
                     deserialize=False,
                 ) 
                 
-                return responses[0]
+                bt.logging.info("Recieved Response")
+                for response in responses:
+                    if response is not None:
+                        return response
                 
-            
-                    
-            
-            
         else: # This is the synthetic synapse
             
             bt.logging.info("========================== Sending the synthetic synapse ============================")
             bt.logging.info(f"New Epoch v{version}")
+            time.sleep(50)
             bt.logging.info("Checking Available Miners.....")
-            avail_uids = get_synthetic_forward_uids(self, count=self.config.neuron.synthetic_challenge_count)
+            avail_uids = get_synthetic_forward_uids(self, self.config.neuron.synthetic_challenge_count)
             
             bt.logging.info(f"Listed Miners Are: {avail_uids}")
             
@@ -158,7 +160,7 @@ async def forward(self, synapse: NATextSynapse=None) -> NATextSynapse:
             
         # Adjust the scores based on responses from miners.
         
-        # res_time = [response.dendrite.process_time for response in responses]
+        res_time = [response.dendrite.process_time for response in responses]
         taken_time = time.time() - start_time
         
         if taken_time < loop_time:

@@ -54,8 +54,9 @@ class Validator(BaseValidatorNeuron):
         return await self.forward(synapse)
     
     async def whitelist_fn(self, synapse: NATextSynapse) -> Tuple[bool, str]:
-        
+        bt.logging.debug("checking whitelist **********************************")
         owner_hotkey = os.getenv("OWNER_HOTKEY")
+        print(synapse.dendrite.hotkey)
         if synapse.dendrite and synapse.dendrite.hotkey == owner_hotkey:
             bt.logging.debug("Received a request legit owner hotkey.")
             return False, ""

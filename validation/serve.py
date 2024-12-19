@@ -12,7 +12,7 @@ app = FastAPI()
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=8094)
+    parser.add_argument("--port", type=int, default=46915)
     args = parser.parse_args()
     return args
 
