@@ -104,7 +104,6 @@ def get_organic_forward_uids(
 
     cleanup_results(uids)
     
-    uids = [16, 10]
     return uids
 
 def cleanup_results(results):
