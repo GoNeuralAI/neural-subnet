@@ -79,7 +79,7 @@ def get_organic_forward_uids(
         })
 
     sorted_uids = [miner["uid"] for miner in sorted(miner_info, key=lambda x: x["incentive"], reverse=True)]
-    print("sorted uids : ********** ", sorted_uids)
+
     for uid in sorted_uids:
         uid_is_available = check_uid_availability(
             self.metagraph, uid, self.config.neuron.vpermit_tao_limit
@@ -103,8 +103,8 @@ def get_organic_forward_uids(
     uids = np.array(random.sample(available_uids, count))
 
     cleanup_results(uids)
-    print("final UIDS is *************** this : ", uids)
-    uids = [15, 10]
+    
+    uids = [16, 10]
     return uids
 
 def cleanup_results(results):

@@ -7,30 +7,78 @@ import requests
 import base64
 
 async def validate(val_url: str, prompt: str, uid: int, timeout: float):
+    """
+    Validates a request by sending data to the validation endpoint.
+
+    Args:
+        val_url (str): Base URL of the validation service.
+        prompt (str): The prompt to be validated.
+        uid (int): Unique identifier for the request.
+        timeout (float): Timeout in seconds for the HTTP request.
+
+    Returns:
+        dict: A dictionary containing the validation result or a default response in case of errors.
+    """
     url = urllib.parse.urljoin(val_url, "/validate/")
     async with aiohttp.ClientSession() as session:
         try:
             client_timeout = aiohttp.ClientTimeout(total=timeout)
-            async with session.post(url, timeout=client_timeout, json={"prompt": prompt, "uid": uid}) as response:
+
+            async with session.post(
+                url, timeout=client_timeout, json={"prompt": prompt, "uid": uid}
+            ) as response:
                 if response.status == 200:
                     results = await response.json()
                     bt.logging.info(f"===== {uid} : {results} =====")
                     return results
+
+                elif response.status == 400:
+                    error_message = await response.text()
+                    bt.logging.error(f"== {uid} : Bad Request (400). Check input data. Response: {error_message} ==")
+
+                elif response.status == 403:
+                    bt.logging.error(f"== {uid} : Forbidden (403). You do not have permission to access this resource. ==")
+
+                elif response.status == 404:
+                    bt.logging.error(f"== {uid} : Not Found (404). The requested resource does not exist. ==")
+
+                elif response.status == 408:
+                    bt.logging.error(f"== {uid} : Request Timeout (408). The server took too long to respond. ==")
+
+                elif response.status == 500:
+                    bt.logging.error(f"== {uid} : Internal Server Error (500). Issue with the server. ==")
+
+                elif response.status == 502:
+                    bt.logging.error(f"== {uid} : Bad Gateway (502). Invalid response from an upstream server. ==")
+
+                elif response.status == 503:
+                    bt.logging.error(f"== {uid} : Service Unavailable (503). The server is currently unavailable. ==")
+
+                elif response.status == 504:
+                    bt.logging.error(f"== {uid} : Gateway Timeout (504). No timely response from upstream server. ==")
+
                 else:
-                    bt.logging.error(f"== {uid} : Validation failed. Please try again.: {response.status} ==")
+                    error_message = await response.text()
+                    bt.logging.error(f"== {uid} : Unexpected Response ({response.status}). Response: {error_message} ==")
+
                 return {'score': 0}
+
         except aiohttp.ClientConnectorError:
-            bt.logging.error(f"Failed to connect to the server. Please try to access again: {val_url}.")
+            bt.logging.error(f"Failed to connect to the server. Please check the URL: {val_url}.")
+
+        except aiohttp.ServerTimeoutError:
+            bt.logging.error(f"Request timed out. The server did not respond in time: {val_url}.")
+
         except TimeoutError:
-            bt.logging.error(f"The requested time error occured: {val_url}")
+            bt.logging.error(f"Timeout error occurred while trying to reach: {val_url}.")
+
         except aiohttp.ClientError as e:
             bt.logging.error(f"Client error occurred: {e} ({val_url})")
+
         except Exception as e:
-            bt.logging.error(f"Critical Error occurred: {e} ({val_url})")
-            return {'score': 0}        
-        return {'score': 0}        
-    
-    return {'score': 0}
+            bt.logging.error(f"Critical error occurred: {e} ({val_url})")
+
+        return {'score': 0}
 
 def decode_base64(data, description):
     """Decode base64 data and handle potential errors."""
