@@ -11,7 +11,10 @@ from neuralai.protocol import NATextSynapse
 from neuralai.validator.task_manager import TaskManager
 from neuralai.validator.miner_manager import MinerManager
 from neuralai.validator.wandb_manager import WandbManager
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
 class Validator(BaseValidatorNeuron):
     """
@@ -50,13 +53,13 @@ class Validator(BaseValidatorNeuron):
         time.sleep(5)
         return await self.forward(synapse)
     
-    async def blacklist_fn(self, synapse: NATextSynapse) -> Tuple[bool, str]:
-        # TODO add hotkeys to blacklist here as needed
-        # blacklist the hotkeys mining on the subnet to prevent any potential issues
-        #hotkeys_to_blacklist = [h for i,h in enumerate(self.hotkeys) if self.metagraph.S[i] < 20000 and h != self.wallet.hotkey.ss58_address]
-        #if synapse.dendrite.hotkey in hotkeys_to_blacklist:
-        #    return True, "Blacklisted hotkey - miners can't connect, use a diff hotkey."
-        return False, ""
+    async def whitelist_fn(self, synapse: NATextSynapse) -> Tuple[bool, str]:
+        bt.logging.debug("checking whitelist **********************************")
+        owner_hotkey = os.getenv("OWNER_HOTKEY")
+        if synapse.dendrite and synapse.dendrite.hotkey == owner_hotkey:
+            bt.logging.debug("Received a request legit owner hotkey.")
+            return False, ""
+        return True, "The dendrite missed hotkey or not the owner's hotkey"
 
     async def priority_fn(self, synapse: NATextSynapse) -> float:
         # high priority for organic traffic

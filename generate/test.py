@@ -5,7 +5,7 @@ from PIL import Image
 import argparse
 from fastapi import FastAPI, HTTPException, Body
 import uvicorn
-
+import asyncio
 from infer import Text2Image, Removebg, Image2Views, Views2Mesh, GifRenderer
 
 app = FastAPI()
@@ -71,8 +71,7 @@ def process_image_to_3d(res_rgb_pil, output_folder):
             gif_dst_path=os.path.join(output_folder, 'output.gif'),
         )
 
-@app.post("/generate_from_text")
-async def text_to_3d(prompt: str = Body()):
+async def text_to_3d(prompt):
     output_folder = os.path.join(args.save_folder, "text_to_3d")
     os.makedirs(output_folder, exist_ok=True)
 
@@ -92,20 +91,4 @@ async def text_to_3d(prompt: str = Body()):
 
     return {"success": True, "path": output_folder}
 
-@app.post("/generate_from_image")
-async def image_to_3d(image_path: str):
-    if not os.path.exists(image_path):
-        raise HTTPException(status_code=400, detail="Image file not found")
-
-    output_folder = os.path.join(args.save_folder, "image_to_3d")
-    os.makedirs(output_folder, exist_ok=True)
-
-    # Load Image
-    res_rgb_pil = Image.open(image_path)
-    process_image_to_3d(res_rgb_pil, output_folder)
-
-    return {"message": "3D model generated successfully from image", "output_folder": output_folder}
-
-if __name__ == "__main__":
-    
-    uvicorn.run(app, host="0.0.0.0", port=args.port)
+asyncio.run(text_to_3d("car"))
