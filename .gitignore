@@ -179,3 +179,5 @@ generate/weights
 validation/test.py
 
 test.py
+
+wandb/

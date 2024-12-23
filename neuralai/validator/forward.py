@@ -89,87 +89,86 @@ async def forward(self, synapse: NATextSynapse = None) -> NATextSynapse:
                         return response
 
         else:  # This is the synthetic synapse
-            # bt.logging.info("========================== Sending the synthetic synapse ============================")
-            # bt.logging.info(f"New Epoch v{version}")
-            time.sleep(50)
-            # bt.logging.info("Checking Available Miners.....")
+            bt.logging.info("========================== Sending the synthetic synapse ============================")
+            bt.logging.info(f"New Epoch v{version}")
+            bt.logging.info("Checking Available Miners.....")
 
-            # avail_uids = get_synthetic_forward_uids(self, self.config.neuron.synthetic_challenge_count)
-            # bt.logging.info(f"Listed Miners Are: {avail_uids}")
+            avail_uids = get_synthetic_forward_uids(self, self.config.neuron.synthetic_challenge_count)
+            bt.logging.info(f"Listed Miners Are: {avail_uids}")
 
-            # forward_uids = self.miner_manager.get_miner_status(uids=avail_uids)
+            forward_uids = self.miner_manager.get_miner_status(uids=avail_uids)
 
-            # if len(forward_uids) == 0:
-            #     bt.logging.warning("No Miners Are Available for synthetic synsapse!")
-            #     val_scores = [0 for _ in avail_uids]
-            #     self.update_scores(val_scores, avail_uids)
-            # else:
-            #     bt.logging.info(f"Forward uids are: {forward_uids}")
+            if len(forward_uids) == 0:
+                bt.logging.warning("No Miners Are Available for synthetic synsapse!")
+                val_scores = [0 for _ in avail_uids]
+                self.update_scores(val_scores, avail_uids)
+            else:
+                bt.logging.info(f"Forward uids are: {forward_uids}")
 
-            #     task = await self.task_manager.prepare_task()
-            #     nas = NATextSynapse(prompt_text=task, timeout=timeout)
+                task = await self.task_manager.prepare_task()
+                nas = NATextSynapse(prompt_text=task, timeout=timeout)
 
-            #     if nas.prompt_text:
-            #         process_time = []
-            #         time_rate = self.config.validator.time_rate
+                if nas.prompt_text:
+                    process_time = []
+                    time_rate = self.config.validator.time_rate
 
-            #         bt.logging.info(f"======== Current Task Prompt: {task} ========")
+                    bt.logging.info(f"======== Current Task Prompt: {task} ========")
 
-            #         responses = self.dendrite.query(
-            #             axons=[self.metagraph.axons[uid] for uid in forward_uids],
-            #             synapse=nas,
-            #             timeout=timeout,
-            #             deserialize=False,
-            #         )
-            #         bt.logging.info("Responses Received")
+                    responses = self.dendrite.query(
+                        axons=[self.metagraph.axons[uid] for uid in forward_uids],
+                        synapse=nas,
+                        timeout=timeout,
+                        deserialize=False,
+                    )
+                    bt.logging.info("Responses Received")
 
-            #         start_vali_time = time.time()
+                    start_vali_time = time.time()
 
-            #         tasks = [
-            #             handle_response(
-            #                 response,
-            #                 forward_uids[index],
-            #                 self.config,
-            #                 nas.prompt_text,
-            #                 loop_time - timeout
-            #             )
-            #             for index, response in enumerate(responses)
-            #         ]
-            #         results = await asyncio.gather(*tasks)
+                    tasks = [
+                        handle_response(
+                            response,
+                            forward_uids[index],
+                            self.config,
+                            nas.prompt_text,
+                            loop_time - timeout
+                        )
+                        for index, response in enumerate(responses)
+                    ]
+                    results = await asyncio.gather(*tasks)
 
-            #         val_scores, process_time = zip(*results)
+                    val_scores, process_time = zip(*results)
 
-            #         # Update rewards and scores
-            #         scores = get_rewards(val_scores, avail_uids, forward_uids)
-            #         f_val_scores = normalize(scores)
+                    # Update rewards and scores
+                    scores = get_rewards(val_scores, avail_uids, forward_uids)
+                    f_val_scores = normalize(scores)
 
-            #         bt.logging.info('-' * 40)
-            #         bt.logging.info("=== 3D Object Validation Scores ===", np.round(scores, 3))
+                    bt.logging.info('-' * 40)
+                    bt.logging.info("=== 3D Object Validation Scores ===", np.round(scores, 3))
 
-            #         scores = get_rewards(process_time, avail_uids, forward_uids)
-            #         f_time_scores = normalize(scores)
+                    scores = get_rewards(process_time, avail_uids, forward_uids)
+                    f_time_scores = normalize(scores)
 
-            #         # Considered with the generation time score 0.1
-            #         final_scores = [
-            #             s * (1 - time_rate) + time_rate * (1 - t) if t else s
-            #             for t, s in zip(f_time_scores, f_val_scores)
-            #         ]
+                    # Considered with the generation time score 0.1
+                    final_scores = [
+                        s * (1 - time_rate) + time_rate * (1 - t) if t else s
+                        for t, s in zip(f_time_scores, f_val_scores)
+                    ]
 
-            #         bt.logging.info("=== Total Scores ===", np.round(final_scores, 3))
-            #         bt.logging.info('-' * 40)
+                    bt.logging.info("=== Total Scores ===", np.round(final_scores, 3))
+                    bt.logging.info('-' * 40)
 
-            #         self.update_scores(final_scores, avail_uids)
+                    self.update_scores(final_scores, avail_uids)
 
-            #         bt.logging.info(f"Scoring Taken Time: {time.time() - start_vali_time:.1f}s")
-            #     else:
-            #         bt.logging.error("No prompt is ready yet")
+                    bt.logging.info(f"Scoring Taken Time: {time.time() - start_vali_time:.1f}s")
+                else:
+                    bt.logging.error("No prompt is ready yet")
 
-            #     taken_time = time.time() - start_time
+                taken_time = time.time() - start_time
 
-            #     if taken_time < loop_time:
-            #         bt.logging.info(f"== Taken Time: {taken_time:.1f}s | Sleeping For {loop_time - taken_time:.1f}s ==")
-            #         bt.logging.info('=' * 60)
-            #         time.sleep(loop_time - taken_time)
+                if taken_time < loop_time:
+                    bt.logging.info(f"== Taken Time: {taken_time:.1f}s | Sleeping For {loop_time - taken_time:.1f}s ==")
+                    bt.logging.info('=' * 60)
+                    time.sleep(loop_time - taken_time)
 
     except Exception as e:
         bt.logging.error(traceback.format_exc())
