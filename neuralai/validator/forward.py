@@ -42,8 +42,10 @@ async def forward_synthetic(self, synapse: NATextSynapse = None) -> NATextSynaps
     - Sleep for 300 seconds if needed
     """
     if self.status == "validation":
-        while self.status != "validation":
-            time.sleep(10)
+        while self.status == "validation":
+            bt.logging.info("Organic synapse is progressing now, awaiting completion.")
+            time.sleep(15)
+            
     self.status = "validation"
     start_time = time.time()
     loop_time = self.config.neuron.task_period
@@ -132,12 +134,12 @@ async def forward_synthetic(self, synapse: NATextSynapse = None) -> NATextSynaps
                 bt.logging.error("No prompt is ready yet")
 
             taken_time = time.time() - start_time
-
+            self.status = "idle"
             if taken_time < loop_time:
                 bt.logging.info(f"== Taken Time for synthetic synapse: {taken_time:.1f}s | Sleeping For {loop_time - taken_time:.1f}s ==")
                 bt.logging.info('=' * 60)
                 time.sleep(loop_time - taken_time)
-        self.status = "idel"
+        
 
     except Exception as e:
         self.status = "idle"
@@ -152,7 +154,6 @@ async def forward_organic(self, synapse: NATextSynapse = None) -> NATextSynapse:
         timeout = loop_time / 5
         if synapse.prompt_text is None:
             raise Exception("None prompt of organic synapse.")
-        print("timeout = ", timeout)
         nas = NATextSynapse(prompt_text=synapse.prompt_text, timeout=timeout)
 
         bt.logging.info("============================ Sending the organic synapse ============================")
@@ -161,8 +162,7 @@ async def forward_organic(self, synapse: NATextSynapse = None) -> NATextSynapse:
         bt.logging.info(f"Listed Miners Are: {avail_uids}")
 
         ping_uids = self.miner_manager.get_miner_status(uids=avail_uids)
-        # print("Passed here")
-        # sorted_uids = sorted(ping_uids, key=lambda uid: avail_uids.index(uid))
+
         sorted_uids = ping_uids
         if len(sorted_uids) < 1:
             bt.logging.info("There is no available miners for organic synapse")
@@ -171,7 +171,7 @@ async def forward_organic(self, synapse: NATextSynapse = None) -> NATextSynapse:
             query_count = min(self.config.neuron.organic_query_count, len(sorted_uids))
             forward_uids = sorted_uids[:query_count]
 
-            bt.logging.info(f"Current organic synapse prompt: {synapse.prompt_text}")
+            bt.logging.info(f"======================= Current organic synapse prompt : {synapse.prompt_text} ========================")
             bt.logging.info(f"Forward uids are: {forward_uids}")
 
             responses = self.dendrite.query(
@@ -182,13 +182,30 @@ async def forward_organic(self, synapse: NATextSynapse = None) -> NATextSynapse:
             )
 
             bt.logging.info("Responses Received")
+            tasks = [
+                handle_response(
+                    response,
+                    forward_uids[index],
+                    self.config,
+                    nas.prompt_text,
+                    loop_time - timeout
+                )
+                for index, response in enumerate(responses)
+            ]
+            results = await asyncio.gather(*tasks)
+
+            val_scores, process_time = zip(*results)
+            max_index = val_scores.index(max(val_scores))
+            max_response = responses[max_index]
+            bt.logging.info(f"Returning top score miner's({max_index + 1}th) response")
             taken_time = time.time() - start_time
-            bt.logging.info(f"== Taken Time for synthetic synapse: {taken_time:.1f}s")
+            
+            bt.logging.info(f"== Taken Time for organic synapse: {taken_time:.1f}s")
             bt.logging.info('=' * 60)
+            
             self.status = "idle"
-            for response in responses:
-                if response is not None:
-                            return response
+            
+            return max_response
         
     except Exception as e:
         self.status = "idle"

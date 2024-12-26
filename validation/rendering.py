@@ -73,7 +73,6 @@ def load_image(image_buffer):
         transforms.Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711]),
         # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalize the image
     ])
-    print("Loadded image successfully.")
     return preprocess(image).unsqueeze(0).to(device)
 
 
@@ -84,7 +83,7 @@ def render_mesh(obj_file: str, distance: float = 0.75, elevation: float = 15, az
     try:
         # Load the mesh
         mesh = load_glb_as_mesh(glb_file=obj_file, device=device)
-        print("This mesh is ", mesh)
+        print("The mesh is ", mesh)
         
         # Renderer setup
         R, T = look_at_view_transform(distance, elevation, azimuth, at=((0, 0, 1),))
@@ -162,11 +161,11 @@ def render_mesh(obj_file: str, distance: float = 0.75, elevation: float = 15, az
             loaded_image = load_image(buffer)
             render_images.append(loaded_image)
             
-        print("the length of render_images is ", len(render_images))
+        print("The length of render_images is ", len(render_images))
             
         return render_images, before_render
     except Exception as e:
-        print("the Erorr occurs during the Rendering meshing, incorrect formatted file")
+        print("Erorr occurs during the Rendering meshing, Incorrect formatted file")
         raise HTTPException(status_code=500, detail=str(e))
 
 def render(

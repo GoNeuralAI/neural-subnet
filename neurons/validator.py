@@ -81,17 +81,18 @@ class Validator(BaseValidatorNeuron):
         return synapse
 
     async def whitelist_fn_query(self, synapse: NATextSynapse) -> Tuple[bool, str]:
+        owner_hotkey = self.owner_hotkey
+        if synapse.dendrite and synapse.dendrite.hotkey == owner_hotkey:
+            return False, ""
+        return True, "The dendrite missed hotkey or not the owner's hotkey"
+
+    async def whitelist_fn_status(self, synapse: NAStatus) -> Tuple[bool, str]:
         bt.logging.debug("............................ checking whitelist for organic synapse ............................")
         owner_hotkey = self.owner_hotkey
         if synapse.dendrite and synapse.dendrite.hotkey == owner_hotkey:
             bt.logging.debug("Received a request from legit owner hotkey.")
             return False, ""
-        return True, "The dendrite missed hotkey or not the owner's hotkey"
-
-    async def whitelist_fn_status(self, synapse: NAStatus) -> Tuple[bool, str]:
-        owner_hotkey = self.owner_hotkey
-        if synapse.dendrite and synapse.dendrite.hotkey == owner_hotkey:
-            return False, ""
+        bt.logging.debug("Recieved a request from unauthorized  owner hotkey.")
         return True, "The dendrite missed hotkey or not the owner's hotkey"
 
     async def priority_fn_query(self, synapse: NATextSynapse) -> float:

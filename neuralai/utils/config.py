@@ -91,7 +91,7 @@ def add_args(cls, parser):
         "--wandb.off",
         action="store_true",
         help="Turn off wandb.",
-        default=True,
+        default=False,
     )
 
     parser.add_argument(
