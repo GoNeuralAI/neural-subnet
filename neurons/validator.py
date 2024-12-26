@@ -6,13 +6,14 @@ import bittensor as bt
 # import base validator class which takes care of most of the boilerplate
 from neuralai.base.validator import BaseValidatorNeuron
 # Bittensor Validator Template:
-from neuralai.validator import forward
+from neuralai.validator import forward_synthetic, forward_organic
 from neuralai.protocol import NATextSynapse
 from neuralai.validator.task_manager import TaskManager
 from neuralai.validator.miner_manager import MinerManager
 from neuralai.validator.wandb_manager import WandbManager
 import os
 from dotenv import load_dotenv
+from neuralai.protocol import NAStatus
 
 load_dotenv()
 
@@ -33,12 +34,12 @@ class Validator(BaseValidatorNeuron):
         self.task_manager = TaskManager()
         self.miner_manager = MinerManager(validator=self)
         self.wandb_manager = WandbManager(validator=self)
-        
+        self.owner_hotkey = os.getenv("OWNER_HOTKEY", None)
         bt.logging.info(f"Validator Spec Version: {self.spec_version}")
 
         # TODO(developer): Anything specific to your use case you can do here
 
-    async def forward(self, synapse: NATextSynapse=None):
+    async def forward_synthetic(self, synapse: NATextSynapse=None):
         """
         Validator forward pass. Consists of:
         - Generating the query
@@ -47,21 +48,57 @@ class Validator(BaseValidatorNeuron):
         - Rewarding the miners
         - Updating the scores
         """
-        return await forward(self, synapse)
+        return await forward_synthetic(self, synapse)
+
+    async def forward_organic(self, synapse: NATextSynapse=None):
+        """
+        Validator forward pass. Consists of:
+        - Generating the query
+        - Querying the miners
+        - Getting the responses
+        - Rewarding the miners
+        - Updating the scores
+        """
+        return await forward_organic(self, synapse)
     
     async def forward_fn(self, synapse: NATextSynapse=None):
         time.sleep(5)
-        return await self.forward(synapse)
-    
-    async def whitelist_fn(self, synapse: NATextSynapse) -> Tuple[bool, str]:
-        bt.logging.debug("checking whitelist **********************************")
-        owner_hotkey = os.getenv("OWNER_HOTKEY")
+        return await self.forward_organic(synapse)
+
+    async def forward_status(self, synapse: NAStatus) -> NAStatus:
+        
+        bt.logging.info(f"Current Validator Status: {self.status}")
+        synapse.status = self.status
+        if synapse.sn_version > self.spec_version:
+            bt.logging.warning(
+                "Current subnet version is older than validator subnet version. Please update the miner!"
+            )
+        elif synapse.sn_version < self.spec_version:
+            bt.logging.warning(
+                "Current subnet version is higher than validator subnet version. You can ignore this warning!"
+            )
+            
+        return synapse
+
+    async def whitelist_fn_query(self, synapse: NATextSynapse) -> Tuple[bool, str]:
+        bt.logging.debug("............................ checking whitelist for organic synapse ............................")
+        owner_hotkey = self.owner_hotkey
         if synapse.dendrite and synapse.dendrite.hotkey == owner_hotkey:
-            bt.logging.debug("Received a request legit owner hotkey.")
+            bt.logging.debug("Received a request from legit owner hotkey.")
             return False, ""
         return True, "The dendrite missed hotkey or not the owner's hotkey"
 
-    async def priority_fn(self, synapse: NATextSynapse) -> float:
+    async def whitelist_fn_status(self, synapse: NAStatus) -> Tuple[bool, str]:
+        owner_hotkey = self.owner_hotkey
+        if synapse.dendrite and synapse.dendrite.hotkey == owner_hotkey:
+            return False, ""
+        return True, "The dendrite missed hotkey or not the owner's hotkey"
+
+    async def priority_fn_query(self, synapse: NATextSynapse) -> float:
+        # high priority for organic traffic
+        return 1000000.0
+
+    async def priority_fn_status(self, synapse: NAStatus) -> float:
         # high priority for organic traffic
         return 1000000.0
 

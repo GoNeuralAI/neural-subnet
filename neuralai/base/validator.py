@@ -54,6 +54,8 @@ class BaseValidatorNeuron(BaseNeuron):
         # Save a copy of the hotkeys to local memory.
         self.hotkeys = copy.deepcopy(self.metagraph.hotkeys)
 
+        self.status = "idle"
+        
         # Dendrite lets us send messages to other nodes (axons) in the network.
         if self.config.mock:
             self.dendrite = MockDendrite(wallet=self.wallet)
@@ -97,9 +99,14 @@ class BaseValidatorNeuron(BaseNeuron):
 
             self.axon.attach(
                 forward_fn=self.forward_fn,
-                blacklist_fn=self.whitelist_fn,
-                priority_fn=self.priority_fn,
+                blacklist_fn=self.whitelist_fn_query,
+                priority_fn=self.priority_fn_query,
+            ).attach(
+                forward_fn=self.forward_status,
+                blacklist_fn=self.whitelist_fn_status,
+                priority_fn=self.priority_fn_status,
             )
+            
             try:
                 self.axon.serve(netuid=self.config.netuid, subtensor=self.subtensor)
                 self.axon.start()
@@ -118,7 +125,7 @@ class BaseValidatorNeuron(BaseNeuron):
 
     async def concurrent_forward(self):
         coroutines = [
-            self.forward()
+            self.forward_synthetic()
             for _ in range(self.config.neuron.num_concurrent_forwards)
         ]
         await asyncio.gather(*coroutines, return_exceptions=True)

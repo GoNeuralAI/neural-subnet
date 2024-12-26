@@ -19,8 +19,7 @@
 
 # TODO(developer): Change this value when updating your code base.
 # Define the version of the template module.
-
-__version__ = "2.4.1"
+__version__ = "2.4.2"
 version_split = __version__.split(".")
 __spec_version__ = (
     (1000 * int(version_split[0]))
@@ -33,4 +32,5 @@ from . import protocol
 from . import base
 from . import validator
 from . import api
+from . import protocol
 from .subnet_links import SUBNET_LINKS
