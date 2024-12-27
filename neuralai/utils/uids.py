@@ -96,11 +96,10 @@ def get_organic_forward_uids(
     available_uids = candidate_uids
     
     if len(candidate_uids) < count:
-        available_uids += random.sample(
-            [uid for uid in avail_uids if uid not in candidate_uids],
-            count - len(candidate_uids),
-        )
-    uids = np.array(random.sample(available_uids, count))
+        # Add UIDs from the beginning of avail_uids to make up the difference
+        available_uids += avail_uids[:count - len(candidate_uids)]
+            
+    uids = np.array(available_uids[:count])
 
     cleanup_results(uids)
     
