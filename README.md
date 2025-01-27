@@ -72,7 +72,7 @@ sudo apt install npm && sudo npm install pm2 -g && pm2 update
 
 #### Run Miner with PM2
 ```comandline
-pm2 start python3 neurons/miner.py --netuid {netuid} --wallet.name {wallet} --wallet.hotkey {hotkey} --axon.port {port} --axon.external_port {port} # if you have both interal and external port
+pm2 start python3 neurons/miner.py --netuid {netuid} --wallet.name {wallet} --wallet.hotkey {hotkey} --axon.port {port} --axon.external_port {port} --logging.debug
 ```
 
 #### Generation endpoint with PM2
