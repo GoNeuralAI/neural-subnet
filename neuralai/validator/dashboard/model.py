@@ -1,27 +1,27 @@
 from pydantic import BaseModel
-from typing import List, Optional
 from datetime import datetime
 
-class Operation(BaseModel):
-    request_type: str
-    s_f: str
-    score: float
-    timestamp: str
+from datetime import datetime
+from pydantic import BaseModel
 
 class MinerData(BaseModel):
     miner_uid: int
-    total_storage_size: float
-    operations: List[Operation]
-    request_cycle_score: float
-    weight: float
-    passed_request_count: int
+    validator_hotkey: str
+    prompt: str
+    final_score: float
+    prev_image: str
+    glb_file: str
+    response_time: str
+    timestamp: datetime  # Defining the datatype for timestamp
 
     def to_dict(self):
         return {
             "miner_uid": self.miner_uid,
-            "total_storage_size": self.total_storage_size,
-            "operations": [op.__dict__ for op in self.operations],  # Serialize each Operation
-            "request_cycle_score": self.request_cycle_score,
-            "weight": self.weight,
-            "passed_request_count": self.passed_request_count,
+            "validator_hotkey": self.validator_hotkey,
+            "prompt": self.prompt,
+            "final_score": self.final_score,
+            "prev_image": self.prev_image,
+            "glb_file": self.glb_file,
+            "response_time": self.response_time,
+            "timestamp": self.timestamp.isoformat()  # Converting timestamp to ISO format
         }
