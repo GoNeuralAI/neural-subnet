@@ -52,29 +52,20 @@ async def send_data_to_dashboard(miner_data: MinerData, hotkey: Keypair, receive
     
     response = requests.post(url, headers=headers, json=miner_data.to_dict())
     
-    print("***************** Just send the miner's data to dashboard backend server ********************")
-    print(response)
-    
     if response.status_code == 200:
-        print("Data sent successfully")
+        print("MinerData sent to dashboard backend successfully")
     else:
         print(f"Failed to send data: {response.status_code} - {response.text}")
         
         
 if __name__ == "__main__":
-    miner_data = MinerData(
-        miner_uid=5,
-        total_storage_size=0.0013270825147628784,
-        operations=[
-            Operation(
-                request_type='create',
-                S_F='success',
-                score=1.0,
-                timestamp=datetime.datetime(2024, 12, 13, 15, 45, 18, 921282)
-            )
-        ],
-        request_cycle_score=0.021875000000000002,
-        weight=1.0,
-        passed_request_cycle=167
+    mock_data = MinerData(
+        miner_uid="user_123",
+        validator_hotkey="validator_abc",
+        prompt="Generate an image of a sunset.",
+        final_score=95.5,
+        prev_image="image_path/sunset.png",
+        glb_file="model_path/sunset.glb",
+        response_time=0.256
     )
-    asyncio.run(send_data_to_dashboard(miner_data, "5FRyAYjfEREtBU8YXNR3J5qbjqCcSBd4dj8Yr33bHX8ogxfz", "5CaFsXR78pDfrZd7xRPc79tcUFJaM8fDx9MkQ37qhWYuJ7M5"))
+    asyncio.run(send_data_to_dashboard(mock_data, "5FRyAYjfEREtBU8YXNR3J5qbjqCcSBd4dj8Yr33bHX8ogxfz", "5CaFsXR78pDfrZd7xRPc79tcUFJaM8fDx9MkQ37qhWYuJ7M5"))

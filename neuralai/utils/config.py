@@ -233,7 +233,7 @@ def add_validator_args(cls, parser):
         "--validator.time_rate",
         type=float,
         help="The time period of one ephoch in the validator side",
-        default=0.05,
+        default=0,
     )
 
     parser.add_argument(

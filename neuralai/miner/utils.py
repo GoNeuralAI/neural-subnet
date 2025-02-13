@@ -70,7 +70,7 @@ async def generate(self, synapse: bt.Synapse) -> bt.Synapse:
 
         abs_path = os.path.join('generate', result['path'])
         paths = {
-            "prev": os.path.join(abs_path, 'img.jpg'),
+            "prev": os.path.join(abs_path, 'mesh.png'),
             "glb": os.path.join(abs_path, 'mesh.glb'),
         }
 

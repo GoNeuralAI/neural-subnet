@@ -28,16 +28,20 @@ class Validation:
             start = time.time()
             prompt = data.prompt + " " + EXTRA_PROMPT
             id = data.uid
+            verbose = data.verbose
             
-            rendered_images, before_images = render(prompt, id)
+            rendered_images, before_images = render(prompt, id, verbose)
             
-            prev_img_path = os.path.join(DATA_DIR, f"{data.uid}/preview.png")
+            if verbose:
+                prev_img_path = os.path.join(DATA_DIR, f"{data.uid}/preview.png")
+            else:
+                prev_img_path = os.path.join(DATA_DIR, f"{data.uid}/verbose.png")
             prev_img = load_image(prev_img_path)
             
             Q0 = self.quality_model.compute_quality(prev_img_path)
             print(f"Q0: {Q0}")
             
-            S0 = self.text_model.compute_clip_similarity_prompt(prompt, prev_img_path) if Q0 > 0.4 else 0
+            S0 = self.text_model.compute_clip_similarity_prompt(prompt, prev_img_path) if Q0 > 0.35 else 0
             print(f"S0: {S0} - taken time: {time.time() - start}")
             if S0 < 0.23:
                 return ValidateResponse(score=0)

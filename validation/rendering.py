@@ -76,7 +76,7 @@ def load_image(image_buffer):
     return preprocess(image).unsqueeze(0).to(device)
 
 
-def render_mesh(obj_file: str, distance: float = 0.75, elevation: float = 15, azimuth: float = 0.0, 
+def render_mesh(obj_file: str, distance: float = 0.75, elevation: float = 10, azimuth: float = 0.0, 
                 image_size: int = 512, angle_step: int = 24):
     render_images = []
     before_render = []
@@ -170,12 +170,16 @@ def render_mesh(obj_file: str, distance: float = 0.75, elevation: float = 15, az
 
 def render(
     prompt: str,
-    id: int = 1
+    id: int = 1,
+    verbose: bool = True,
 ):
     print(f"prompt: {prompt} : id={id}")
     
     # Use the uploaded objective file for rendering
-    obj_file = os.path.join(DATA_DIR, f"{id}/output.glb")
+    if verbose:
+        obj_file = os.path.join(DATA_DIR, f"{id}/output.glb")
+    else:
+        obj_file = os.path.join(DATA_DIR, f"{id}/mesh.glb")
 
     # Print the file size
     image_files = render_mesh(obj_file)

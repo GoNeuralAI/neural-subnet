@@ -83,7 +83,7 @@ async def text_to_3d(prompt: str = Body()):
         seed=args.t2i_seed,
         steps=args.t2i_steps
     )
-    res_rgb_pil.save(os.path.join(output_folder, "img.jpg"))
+    res_rgb_pil.save(os.path.join(output_folder, "mesh.png"))
 
     process_image_to_3d(res_rgb_pil, output_folder)
     
