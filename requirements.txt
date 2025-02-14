@@ -1,4 +1,7 @@
 bittensor==9.0.0
+bt-decode==0.5.0a2
+bittensor-cli==9.0.0
+async-substrate-interface==1.0.0
 starlette>=0.30.0
 pydantic>=2
 rich>=13

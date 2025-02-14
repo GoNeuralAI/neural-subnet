@@ -161,7 +161,7 @@ async def forward_organic(self, synapse: NATextSynapse = None) -> NATextSynapse:
         avail_uids = get_organic_forward_uids(self, self.config.neuron.organic_challenge_count)
         bt.logging.info(f"Listed Miners Are: {avail_uids}")
 
-        ping_uids = self.miner_manager.get_miner_status(uids=avail_uids)
+        ping_uids = await self.miner_manager.get_miner_status(uids=avail_uids)
 
         sorted_uids = ping_uids
         if len(sorted_uids) < 1:
