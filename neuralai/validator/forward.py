@@ -66,7 +66,7 @@ async def forward_synthetic(self, synapse: NATextSynapse = None) -> NATextSynaps
         avail_uids = get_synthetic_forward_uids(self, self.config.neuron.synthetic_challenge_count)
         bt.logging.info(f"Listed Miners Are: {avail_uids}")
 
-        forward_uids = self.miner_manager.get_miner_status(uids=avail_uids)
+        forward_uids = await self.miner_manager.get_miner_status(uids=avail_uids)
 
         if len(forward_uids) == 0:
             bt.logging.warning("No Miners Are Available for synthetic synsapse!")
@@ -84,7 +84,7 @@ async def forward_synthetic(self, synapse: NATextSynapse = None) -> NATextSynaps
 
                 bt.logging.info(f"======== Current Task Prompt: {task} ========")
 
-                responses = self.dendrite.query(
+                responses = await self.dendrite(
                     axons=[self.metagraph.axons[uid] for uid in forward_uids],
                     synapse=nas,
                     timeout=timeout,
