@@ -16,6 +16,8 @@ class MinerManager:
             deserialize=False,
             timeout=10
         )
+        if len(responses) == 0:
+            return []
 
         responses = {
             uid: response.status
