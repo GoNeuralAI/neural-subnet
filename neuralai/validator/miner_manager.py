@@ -16,7 +16,7 @@ class MinerManager:
             deserialize=False,
             timeout=10
         )
-        if len(responses) == 0:
+        if responses == None:
             return []
 
         responses = {
