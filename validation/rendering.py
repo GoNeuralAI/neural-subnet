@@ -16,8 +16,8 @@ from fastapi import  HTTPException
 from torchvision import transforms
 from pytorch3d.renderer import TexturesUV, TexturesVertex
 
-DATA_DIR = 'models'
-OUTPUT_DIR = './validation/output_images'
+DATA_DIR = './results'
+OUTPUT_DIR = './output_images'
 
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
@@ -27,7 +27,6 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 def load_glb_as_mesh(glb_file, device='cpu'):
     # Load the .glb file using trimesh
-    print(glb_file)
     mesh = trimesh.load(glb_file, file_type='glb', force="mesh")
     
     # Extract vertices, faces, and UV coordinates from the trimesh object
@@ -183,7 +182,7 @@ def render(
     
     # Use the uploaded objective file for rendering
     if verbose:
-        obj_file = os.path.join(DATA_DIR, f"{id}.glb")
+        obj_file = os.path.join(DATA_DIR, f"{id}/output.glb")
     else:
         obj_file = os.path.join(DATA_DIR, f"{id}/mesh.glb")
 

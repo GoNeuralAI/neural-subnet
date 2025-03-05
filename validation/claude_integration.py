@@ -11,7 +11,7 @@ load_dotenv()
 
 api_key = os.getenv("CLAUDE_API_KEY")
 
-BASE_DIR = './validation/output_images'
+BASE_DIR = './output_images'
 
 def get_image_description(image_path, max_retries=20):
     start_time = time.time()

@@ -2,15 +2,15 @@ import os
 import time
 import numpy as np
 from fastapi import HTTPException
-from .models import ValidateRequest, ValidateResponse
-from .validation.text_clip_model import TextModel
-from .validation.image_clip_model import ImageModel
-from .validation.quality_model import QualityModel
-from .validation.text_similarity_model import TextSimilarityModel
-from .claude_integration import get_render_img_descs, get_prev_img_desc
-from .rendering import render, load_image
+from models import ValidateRequest, ValidateResponse
+from validation.text_clip_model import TextModel
+from validation.image_clip_model import ImageModel
+from validation.quality_model import QualityModel
+from validation.text_similarity_model import TextSimilarityModel
+from claude_integration import get_render_img_descs, get_prev_img_desc
+from rendering import render, load_image
 
-DATA_DIR = './validation/results'
+DATA_DIR = './results'
 EXTRA_PROMPT = 'anime'
 
 
@@ -29,7 +29,8 @@ class Validation:
             start = time.time()
             prompt = data.prompt
             id = data.uuid
-            
+            print(prompt, id)
+            print("Rendering 3D mesh file.....")    
             rendered_images, before_images = render(prompt, id)
             
             image_descs = get_render_img_descs()
@@ -39,8 +40,8 @@ class Validation:
             prompt_vector = self.text_similarity_model.fetch_vectors([prompt])[0]
             
             prev_img_path = os.path.join(DATA_DIR, f"{data.uuid}/preview.jpeg")
+            print("Loading preview image.....")            
             prev_img = load_image(prev_img_path)
-            
             prev_img_desc = get_prev_img_desc(prev_img_path)
             prev_img_vector = self.text_similarity_model.fetch_vectors([prev_img_desc])
             

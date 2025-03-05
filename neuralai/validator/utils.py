@@ -135,7 +135,7 @@ async def validate(val_url: str, prompt: str, uid: int, timeout: float):
             client_timeout = aiohttp.ClientTimeout(total=timeout)
 
             async with session.post(
-                url, timeout=client_timeout, json={"prompt": prompt, "uid": uid}
+                url, timeout=client_timeout, json={"prompt": prompt, "uuid": uid}
             ) as response:
                 if response.status == 200:
                     results = await response.json()
