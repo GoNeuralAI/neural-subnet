@@ -6,6 +6,7 @@ import os
 import base64
 from dotenv import load_dotenv
 from neuralai.miner.s3_bucket import s3_upload, generate_presigned_url
+from PIL import Image
 
 load_dotenv()
 
@@ -53,6 +54,34 @@ def read_file(file_path):
     except Exception as e:
         return str(e)
 
+def convert_png_to_jpeg(png_file_path):
+    """
+    Converts a PNG file to a JPEG file in the same directory with the same base name.
+    
+    Args:
+        png_file_path (str): The full path to the PNG file.
+    
+    Returns:
+        str: The full path to the converted JPEG file.
+    """
+    try:
+        # Ensure the file has a .png extension
+        if not png_file_path.lower().endswith('.png'):
+            raise ValueError("Provided file is not a PNG file.")
+        
+        # Generate the JPEG file path
+        jpeg_file_path = os.path.splitext(png_file_path)[0] + '.jpeg'
+        
+        # Open the PNG file and convert it to JPEG
+        with Image.open(png_file_path) as img:
+            rgb_img = img.convert('RGB')  # Convert to RGB (JPEG does not support transparency)
+            rgb_img.save(jpeg_file_path, 'JPEG')
+            print(f'Converted: {png_file_path} to {jpeg_file_path}')
+        return jpeg_file_path  # Return the path to the new JPEG file
+    
+    except Exception as e:
+        raise RuntimeError(f"Error converting PNG to JPEG: {e}")
+
 async def generate(self, synapse: bt.Synapse) -> bt.Synapse:
     url = urllib.parse.urljoin(self.config.generation.endpoint, "/generate_from_text/")
     timeout = synapse.timeout
@@ -73,11 +102,13 @@ async def generate(self, synapse: bt.Synapse) -> bt.Synapse:
             "prev": os.path.join(abs_path, 'mesh.png'),
             "glb": os.path.join(abs_path, 'mesh.glb'),
         }
+        
+        prev_img_path = convert_png_to_jpeg(paths["prev"])
 
         try:
             if S3_BUCKET_USE != "TRUE":
                 print(paths["prev"])
-                synapse.out_prev = base64.b64encode(read_file(paths["prev"])).decode('utf-8')
+                synapse.out_prev = base64.b64encode(read_file(prev_img_path)).decode('utf-8')
                 synapse.out_glb = base64.b64encode(read_file(paths["glb"])).decode('utf-8')
                 synapse.s3_addr = []
             else:

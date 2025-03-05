@@ -5,6 +5,116 @@ import base64
 import os
 import requests
 import base64
+from PIL import Image
+import io
+
+def detect_image_type(base64_string):
+    """
+    Detect whether a base64-encoded image is PNG or JPEG.
+
+    Args:
+        base64_string (str): The base64-encoded image data.
+
+    Returns:
+        str: 'png', 'jpeg', or 'unknown' depending on the file type.
+    """
+    try:
+        # Decode the base64 string into bytes
+        image_bytes = base64.b64decode(base64_string)
+
+        # Check for PNG magic number
+        if image_bytes[:8] == b'\x89PNG\r\n\x1a\n':
+            return 'png'
+
+        # Check for JPEG magic number
+        if image_bytes[:3] == b'\xFF\xD8\xFF':
+            return 'jpeg'
+
+        # If no match, return unknown
+        return 'unknown'
+
+    except Exception as e:
+        raise RuntimeError(f"Error detecting image type: {e}")
+
+
+def convert_to_jpeg(image):
+    """
+    Convert an image to JPEG format.
+
+    Args:
+        image (PIL.Image.Image): The input image.
+
+    Returns:
+        PIL.Image.Image: The converted image in JPEG format.
+    """
+    try:
+        # Convert the image to RGB (JPEG does not support transparency)
+        return image.convert('RGB')
+    except Exception as e:
+        raise RuntimeError(f"Error converting image to JPEG: {e}")
+
+
+def resize_image(image, size=(200, 200)):
+    """
+    Resize an image to the specified dimensions.
+
+    Args:
+        image (PIL.Image.Image): The input image.
+        size (tuple): Desired image size, default is (200, 200).
+
+    Returns:
+        PIL.Image.Image: The resized image.
+    """
+    try:
+        return image.resize(size, Image.Resampling.LANCZOS)
+    except Exception as e:
+        raise RuntimeError(f"Error resizing image: {e}")
+
+
+def process_base64_image(base64_string, size=(200, 200)):
+    """
+    Process a base64-encoded image: check format, convert to JPEG if needed,
+    resize it to the specified dimensions, and return the final image as a
+    base64-encoded string.
+
+    Args:
+        base64_string (str): The base64-encoded image data.
+        size (tuple): Desired image size, default is (200, 200).
+
+    Returns:
+        str: Base64-encoded string of the final processed image in JPEG format.
+    """
+    try:
+        # Step 1: Detect the image type
+        image_type = detect_image_type(base64_string)
+        if image_type == 'unknown':
+            raise ValueError("Unsupported image format or corrupted base64 string.")
+
+        # Step 2: Decode the base64 string into an image
+        image_data = base64.b64decode(base64_string)
+        image = Image.open(io.BytesIO(image_data))
+
+        # Step 3: If the image is not JPEG, convert it to JPEG
+        if image_type != 'jpeg':
+            bt.logging.debug("Image is not JPEG. Converting to JPEG...")
+            image = convert_to_jpeg(image)
+
+        # Step 4: Resize the image
+        bt.logging.debug(f"Resizing image to {size}...")
+        resized_image = resize_image(image, size)
+
+        # Step 5: Save the resized image as a JPEG into a buffer
+        buffer = io.BytesIO()
+        resized_image.save(buffer, format="JPEG")
+        buffer.seek(0)
+
+        # Step 6: Encode the final image back to base64
+        final_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+        return final_base64
+
+    except Exception as e:
+        raise RuntimeError(f"Error processing base64 image: {e}")
+    
 
 async def validate(val_url: str, prompt: str, uid: int, timeout: float):
     """
@@ -89,7 +199,7 @@ def decode_base64(data, description):
     except base64.binascii.Error as e:
         raise ValueError(f"Failed to decode {description} data: {e}")
 
-file_names = ["preview.png", "output.glb"]
+file_names = ["preview.jpeg", "output.glb"]
 
 def save_file(file_path, content, is_binary=True):
     mode = 'wb' if is_binary else 'w'
@@ -113,7 +223,10 @@ def save_synapse_files(synapse, index, base_dir='validation'):
             bt.logging.error(f"Error occurred while processing files: {e}")
     else:
         try:
-            save_file(os.path.join(save_dir, 'preview.png'), decode_base64(synapse.out_prev, "preview"))
+            # normalize preview images
+            processed_base64 = process_base64_image(synapse.out_prev)
+            bt.logging.info("Base64 image processing complete.")
+            save_file(os.path.join(save_dir, 'preview.jpeg'), base64.b64decode(processed_base64))
             save_file(os.path.join(save_dir, 'output.glb'), decode_base64(synapse.out_glb, "glb"))
         except Exception as e:
-            print(f"Error saving synapse files: {e}")
+            bt.logging.debug(f"Error saving synapse files: {e}")
