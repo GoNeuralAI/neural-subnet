@@ -39,7 +39,6 @@ async def forward_synthetic(self, synapse: NATextSynapse = None) -> NATextSynaps
         - Saving the state
     - Normalize weights based on incentive_distribution
     - SET WEIGHTS!
-    - Sleep for 300 seconds if needed
     """
     if self.status == "validation":
         while self.status == "validation":
@@ -49,7 +48,7 @@ async def forward_synthetic(self, synapse: NATextSynapse = None) -> NATextSynaps
     self.status = "validation"
     start_time = time.time()
     loop_time = self.config.neuron.task_period
-    timeout = (int)(loop_time / 3)
+    timeout = (int)(loop_time / 4)
     val_scores = []
 
     if not self.config.wandb.off:
