@@ -40,11 +40,18 @@ async def forward_synthetic(self, synapse: NATextSynapse = None) -> NATextSynaps
     - Normalize weights based on incentive_distribution
     - SET WEIGHTS!
     """
+
     if self.status == "validation":
+        start_loop_time = time.time()
         while self.status == "validation":
             bt.logging.info("Organic synapse is progressing now, awaiting completion.")
             time.sleep(15)
             
+            # Check if more than 100 seconds have passed
+            if time.time() - start_loop_time > 100:
+                bt.logging.warning("Validation state timeout after 100s, setting status to idle")
+                break
+
     self.status = "validation"
     start_time = time.time()
     loop_time = self.config.neuron.task_period
