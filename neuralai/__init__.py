@@ -19,6 +19,7 @@
 
 # TODO(developer): Change this value when updating your code base.
 # Define the version of the template module.
+
 __version__ = "2.5.1"
 
 version_split = __version__.split(".")
