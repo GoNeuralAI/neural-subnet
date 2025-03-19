@@ -358,6 +358,13 @@ class BaseValidatorNeuron(BaseNeuron):
         # Update the hotkeys.
         self.hotkeys = copy.deepcopy(self.metagraph.hotkeys)
 
+    def check_serving_axon(self, metagraph: "bt.metagraph.Metagraph", uid: int) -> bool:
+        # Filter non serving axons.
+        if not metagraph.axons[uid].is_serving:
+            return False
+        return True
+
+
     def update_scores(self, rewards: np.ndarray, uids: List[int]):
         """Performs exponential moving average on the scores based on the rewards received from the miners."""
 
@@ -390,6 +397,7 @@ class BaseValidatorNeuron(BaseNeuron):
         # Compute forward pass rewards, assumes uids are mutually exclusive.
         # shape: [ metagraph.n ]
         uids_list = self.metagraph.uids.tolist()
+
         # Calculate how many elements to add
         count_to_add = len(uids_list) - len(self.base_scores)
 
@@ -398,10 +406,23 @@ class BaseValidatorNeuron(BaseNeuron):
             additional_zeros = np.zeros(count_to_add, dtype=np.float32)
             # Concatenate the two arrays
             self.base_scores = np.concatenate((self.base_scores, additional_zeros))
-    
+
+        # Create list of non-serving UIDs
+        non_serving_uids = []
+        for uid in range(self.metagraph.n.item()):
+            if not self.check_serving_axon(self.metagraph, uid):
+                non_serving_uids.append(uid)
+        
+        bt.logging.debug("Giving penalty scores to non-serving uids...")
+        bt.logging.debug(f"Non-serving uids: {non_serving_uids}")
+
+        # Initialize scattered rewards
         scattered_rewards: np.ndarray = np.full_like(self.base_scores, -1)
         scattered_rewards[uids_array] = rewards
-        bt.logging.debug(f"Final rewards: {rewards}")
+        
+        # Apply zero scores to non-serving miners
+        scattered_rewards[non_serving_uids] = 0
+        bt.logging.debug(f"Final rewards (including penalties): {scattered_rewards}")
 
         # Update base_scores with rewards produced by this step.
         # shape: [ metagraph.n ]
