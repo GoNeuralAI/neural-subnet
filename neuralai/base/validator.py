@@ -360,11 +360,12 @@ class BaseValidatorNeuron(BaseNeuron):
 
     def check_serving_axon(self, metagraph: "bt.metagraph.Metagraph", uid: int, vpermit_tao_limit: int) -> bool:
         # Filter non serving axons.
-        if not metagraph.axons[uid].is_serving:
-            return False
         if metagraph.validator_permit[uid]:
             if metagraph.S[uid] >= vpermit_tao_limit:
-                return False
+                return True
+            
+        if not metagraph.axons[uid].is_serving:
+            return False
         # Available otherwise.
         return True
 
