@@ -358,10 +358,14 @@ class BaseValidatorNeuron(BaseNeuron):
         # Update the hotkeys.
         self.hotkeys = copy.deepcopy(self.metagraph.hotkeys)
 
-    def check_serving_axon(self, metagraph: "bt.metagraph.Metagraph", uid: int) -> bool:
+    def check_serving_axon(self, metagraph: "bt.metagraph.Metagraph", uid: int, vpermit_tao_limit: int) -> bool:
         # Filter non serving axons.
         if not metagraph.axons[uid].is_serving:
             return False
+        if metagraph.validator_permit[uid]:
+            if metagraph.S[uid] >= vpermit_tao_limit:
+                return False
+        # Available otherwise.
         return True
 
 
@@ -410,7 +414,7 @@ class BaseValidatorNeuron(BaseNeuron):
         # Create list of non-serving UIDs
         non_serving_uids = []
         for uid in range(self.metagraph.n.item()):
-            if not self.check_serving_axon(self.metagraph, uid):
+            if not self.check_serving_axon(self.metagraph, uid, self.config.neuron.vpermit_tao_limit):
                 non_serving_uids.append(uid)
         
         bt.logging.debug("Giving penalty scores to non-serving uids...")
