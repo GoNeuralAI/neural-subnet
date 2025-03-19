@@ -10,7 +10,7 @@ from validation.text_similarity_model import TextSimilarityModel
 from claude_integration import get_render_img_descs, get_prev_img_desc
 from rendering import render, load_image
 
-DATA_DIR = './results'
+DATA_DIR = './validation/results'
 EXTRA_PROMPT = 'anime'
 
 
