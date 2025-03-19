@@ -39,17 +39,23 @@ async def forward_synthetic(self, synapse: NATextSynapse = None) -> NATextSynaps
         - Saving the state
     - Normalize weights based on incentive_distribution
     - SET WEIGHTS!
-    - Sleep for 300 seconds if needed
     """
+
     if self.status == "validation":
+        start_loop_time = time.time()
         while self.status == "validation":
             bt.logging.info("Organic synapse is progressing now, awaiting completion.")
             time.sleep(15)
             
+            # Check if more than 100 seconds have passed
+            if time.time() - start_loop_time > 100:
+                bt.logging.warning("Validation state timeout after 100s, setting status to idle")
+                break
+
     self.status = "validation"
     start_time = time.time()
     loop_time = self.config.neuron.task_period
-    timeout = (int)(loop_time / 3)
+    timeout = (int)(loop_time / 4)
     val_scores = []
 
     if not self.config.wandb.off:
@@ -72,9 +78,9 @@ async def forward_synthetic(self, synapse: NATextSynapse = None) -> NATextSynaps
             bt.logging.warning("No Miners Are Available for synthetic synsapse!")
             val_scores = [0 for _ in avail_uids]
             self.update_scores(val_scores, avail_uids)
+            self.status = "idle"
         else:
             bt.logging.info(f"Forward uids are: {forward_uids}")
-
             task = await self.task_manager.prepare_task()
             nas = NATextSynapse(prompt_text=task, timeout=timeout)
 

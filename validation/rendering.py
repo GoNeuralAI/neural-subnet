@@ -27,7 +27,6 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 def load_glb_as_mesh(glb_file, device='cpu'):
     # Load the .glb file using trimesh
-    print(glb_file)
     mesh = trimesh.load(glb_file, file_type='glb', force="mesh")
     
     # Extract vertices, faces, and UV coordinates from the trimesh object
@@ -77,11 +76,12 @@ def load_image(image_buffer):
 
 
 def render_mesh(obj_file: str, distance: float = 0.75, elevation: float = 10, azimuth: float = 0.0, 
-                image_size: int = 512, angle_step: int = 24):
+                image_size: int = 200, angle_step: int = 48):
     render_images = []
     before_render = []
     try:
         # Load the mesh
+        print(obj_file)
         mesh = load_glb_as_mesh(glb_file=obj_file, device=device)
         print("The mesh is ", mesh)
         
@@ -112,7 +112,7 @@ def render_mesh(obj_file: str, distance: float = 0.75, elevation: float = 10, az
         )
 
         # Generate and save images
-        angles = range(0, 360, angle_step)  # Angles from 0 to 330 degrees with step size
+        angles = range(24, 360, angle_step)  # Angles from 0 to 330 degrees with step size
         for angle in angles:
             R, T = look_at_view_transform(distance, elevation, angle)
             cameras = PerspectiveCameras(device=device, R=R, T=T)
@@ -141,13 +141,18 @@ def render_mesh(obj_file: str, distance: float = 0.75, elevation: float = 10, az
             
             # Ensure the image tensor is in the [0, 1] range
             image = (image - image.min()) / (image.max() - image.min())
-            
+
+            image_filename = os.path.join(OUTPUT_DIR, f'image_{angle}.jpeg')
+            ndarr = image.mul(255).clamp(0, 255).byte().numpy().transpose(1, 2, 0)  # Convert to [H, W, C] format
+            pil_images = Image.fromarray(ndarr, 'RGB')  # Specify 'RGB' since we don't need alpha for JPEG
+            pil_images.save(image_filename, format='JPEG')  # Save as JPEG
+
             # Composite the image with transparency
             image = torch.cat([image, alpha], dim=0)  # Add alpha channel to the image
             
             # Save rendered images locally
-            # image_filename = os.path.join(OUTPUT_DIR, f'image_{angle}.png')
-            # save_image(image, image_filename)  # Save image
+            # image_filename = os.path.join(OUTPUT_DIR, f'image_{angle}.jpeg')
+            # pil_image.convert("RGB").save(image_filename, format='JPEG') # save images
             
             # Convert to [H, W, C] format with RGBA
             ndarr = image.mul(255).clamp(0, 255).byte().numpy().transpose(1, 2, 0)
