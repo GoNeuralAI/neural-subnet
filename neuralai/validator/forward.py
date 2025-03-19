@@ -78,9 +78,9 @@ async def forward_synthetic(self, synapse: NATextSynapse = None) -> NATextSynaps
             bt.logging.warning("No Miners Are Available for synthetic synsapse!")
             val_scores = [0 for _ in avail_uids]
             self.update_scores(val_scores, avail_uids)
+            self.status = "idle"
         else:
             bt.logging.info(f"Forward uids are: {forward_uids}")
-
             task = await self.task_manager.prepare_task()
             nas = NATextSynapse(prompt_text=task, timeout=timeout)
 
