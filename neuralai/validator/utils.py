@@ -100,7 +100,6 @@ def process_base64_image(base64_string, size=(200, 200)):
             image = convert_to_jpeg(image)
 
         # Step 4: Resize the image
-        bt.logging.debug(f"Resizing image to {size}...")
         resized_image = resize_image(image, size)
 
         # Step 5: Save the resized image as a JPEG into a buffer
@@ -225,7 +224,6 @@ def save_synapse_files(synapse, index, base_dir='validation'):
         try:
             # normalize preview images
             processed_base64 = process_base64_image(synapse.out_prev)
-            bt.logging.info("Base64 image processing complete.")
             save_file(os.path.join(save_dir, 'preview.jpeg'), base64.b64decode(processed_base64))
             save_file(os.path.join(save_dir, 'output.glb'), decode_base64(synapse.out_glb, "glb"))
         except Exception as e:
