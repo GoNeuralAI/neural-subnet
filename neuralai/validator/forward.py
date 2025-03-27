@@ -90,12 +90,15 @@ async def forward_synthetic(self, synapse: NATextSynapse = None) -> NATextSynaps
 
                 bt.logging.info(f"======== Current Task Prompt: {task} ========")
 
-                responses = await self.dendrite(
+                responses = await self.dendrite.forward(
                     axons=[self.metagraph.axons[uid] for uid in forward_uids],
                     synapse=nas,
                     timeout=timeout,
                     deserialize=False,
                 )
+
+                await self.dendrite.aclose_session()
+
                 bt.logging.info("Responses Received")
 
                 start_vali_time = time.time()
