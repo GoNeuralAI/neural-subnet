@@ -11,7 +11,7 @@ class MinerManager:
         query_axons = [all_axons[uid] for uid in uids]
         synapse = NAStatus(sn_version=self.validator.spec_version)
         print("sending status query to miners now", len(query_axons))
-        responses = await self.validator.dendrite(
+        responses = await self.validator.dendrite.forward(
             query_axons,
             synapse,
             deserialize=False,
