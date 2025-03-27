@@ -275,7 +275,7 @@ def add_validator_args(cls, parser):
         "--neuron.organic_query_count",
         type=int,
         help="The acutual number of miners when sends the organic synapse",
-        default=3,
+        default=5,
     )
 
 def config(cls):

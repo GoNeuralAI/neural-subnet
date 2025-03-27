@@ -170,9 +170,7 @@ async def forward_organic(self, synapse: NATextSynapse = None) -> NATextSynapse:
         avail_uids = get_organic_forward_uids(self, self.config.neuron.organic_challenge_count)
         bt.logging.info(f"Listed Miners Are: {avail_uids}")
 
-        ping_uids = await self.miner_manager.get_miner_status(uids=avail_uids)
-
-        sorted_uids = ping_uids
+        sorted_uids = avail_uids
         if len(sorted_uids) < 1:
             bt.logging.info("There is no available miners for organic synapse")
             self.status = "idle"
@@ -183,38 +181,42 @@ async def forward_organic(self, synapse: NATextSynapse = None) -> NATextSynapse:
             bt.logging.info(f"======================= Current organic synapse prompt : {synapse.prompt_text} ========================")
             bt.logging.info(f"Forward uids are: {forward_uids}")
 
-            responses = self.dendrite.query(
-                axons=[self.metagraph.axons[uid] for uid in forward_uids],
-                synapse=nas,
-                timeout=timeout,
-                deserialize=False,
-            )
+            current_loop = asyncio.get_running_loop()
 
-            bt.logging.info("Responses Received")
-            tasks = [
-                handle_response(
-                    response,
-                    forward_uids[index],
-                    self.config,
-                    nas.prompt_text,
-                    loop_time - timeout
+            async with bt.dendrite(wallet=self.wallet) as temp_dendrite:
+                responses = await temp_dendrite.forward(
+                    axons=[self.metagraph.axons[uid] for uid in forward_uids],
+                    synapse=nas,
+                    timeout=50,
+                    deserialize=False,
                 )
-                for index, response in enumerate(responses)
-            ]
-            results = await asyncio.gather(*tasks)
+                await temp_dendrite.aclose_session()
 
-            val_scores, process_time = zip(*results)
-            max_index = val_scores.index(max(val_scores))
-            max_response = responses[max_index]
-            bt.logging.info(f"Returning top score miner's({max_index + 1}th) response")
-            taken_time = time.time() - start_time
-            
-            bt.logging.info(f"== Taken Time for organic synapse: {taken_time:.1f}s")
-            bt.logging.info('=' * 60)
-            
-            self.status = "idle"
-            
-            return max_response
+                bt.logging.info("Responses Received")
+                tasks = [
+                    handle_response(
+                        response,
+                        forward_uids[index],
+                        self.config,
+                        nas.prompt_text,
+                        loop_time - timeout
+                    )
+                    for index, response in enumerate(responses)
+                ]
+                results = await asyncio.gather(*tasks)
+
+                val_scores, process_time = zip(*results)
+                max_index = val_scores.index(max(val_scores))
+                max_response = responses[max_index]
+                bt.logging.info(f"Returning top score miner's({max_index + 1}th) response")
+                taken_time = time.time() - start_time
+                
+                bt.logging.info(f"== Taken Time for organic synapse: {taken_time:.1f}s")
+                bt.logging.info('=' * 60)
+                
+                self.status = "idle"
+                
+                return max_response
         
     except Exception as e:
         self.status = "idle"
