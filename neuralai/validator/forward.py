@@ -187,7 +187,7 @@ async def forward_organic(self, synapse: NATextSynapse = None) -> NATextSynapse:
                 responses = await temp_dendrite.forward(
                     axons=[self.metagraph.axons[uid] for uid in forward_uids],
                     synapse=nas,
-                    timeout=50,
+                    timeout=timeout,
                     deserialize=False,
                 )
                 await temp_dendrite.aclose_session()
