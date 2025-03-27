@@ -48,7 +48,7 @@ async def forward_synthetic(self, synapse: NATextSynapse = None) -> NATextSynaps
             time.sleep(15)
             
             # Check if more than 100 seconds have passed
-            if time.time() - start_loop_time > 100:
+            if time.time() - start_loop_time > 300:
                 bt.logging.warning("Validation state timeout after 100s, setting status to idle")
                 break
 
