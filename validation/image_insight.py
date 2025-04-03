@@ -84,7 +84,7 @@ class ImageAnalysisToolkit:
         print(f"final result: {is_real_object}")
         return is_real_object, confidence, reason
 
-    def analyze_images(self, image_paths, threshold=0.5):
+    def analyze_images(self, image_paths, threshold=0.75):
         """
         Analyze a list of image paths and calculate the average score.
         
@@ -112,7 +112,6 @@ class ImageAnalysisToolkit:
             
             print("***** Analyzing new image file *****")
             content = self.is_real_object_image(image_path)
-            # Add 1 to the score if the image is classified as a real object, otherwise 0
             total_score += 1 if content[0] else 0
         
         # Calculate the average score
