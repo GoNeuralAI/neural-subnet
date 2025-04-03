@@ -6,8 +6,6 @@ import os
 
 class ImageAnalysisToolkit:
     def __init__(self, preview_model_dir, log_file_path):
-        self.preview_model_dir = preview_model_dir
-        self.log_file_path = log_file_path
         self.count = 0
         self.success = 0
 
@@ -71,10 +69,6 @@ class ImageAnalysisToolkit:
         entropy_value, entropy_result = ImageAnalysisToolkit.calculate_image_entropy(image_path)
         histogram_result = ImageAnalysisToolkit.analyze_color_histogram(image_path)
         text_result = ImageAnalysisToolkit.has_text_content(image_path)
-        print(edge_result)
-        print(entropy_result)
-        print(histogram_result)
-        print(text_result)
         positive_counts = sum([edge_result, entropy_result, histogram_result, text_result])
         confidence = positive_counts / 4.0
         reason = "Undetermined"
@@ -86,26 +80,44 @@ class ImageAnalysisToolkit:
             reason = "Limited color distribution"
         elif not text_result and confidence < 0.75:
             reason = "has texts"
-        is_real_object = confidence >= 0.67
+        is_real_object = confidence >= 0.75
         print(f"final result: {is_real_object}")
         return is_real_object, confidence, reason
 
-    def analyze_directory(self):
-        with open(self.log_file_path, "w") as log_file:
-            sys.stdout = log_file
-            if not os.path.exists(self.preview_model_dir):
-                print(f"Directory '{self.preview_model_dir}' does not exist.")
-            else:
-                for file_name in os.listdir(self.preview_model_dir):
-                    file_path = os.path.join(self.preview_model_dir, file_name)
-                    if file_name.lower().endswith((".jpg", ".jpeg", ".png", ".bmp", ".gif")):
-                        print("analyzing new file ***************************************************************************************************************************************")
-                        content = self.is_real_object_image(file_path)
-                        print(content)
-                        if content[0] == 1:
-                            self.success += 1
-                        self.count += 1
-                        if self.count > 1000:
-                            break
-            print(self.count)
-            print(self.success)
+    def analyze_images(self, image_paths, threshold=0.5):
+        """
+        Analyze a list of image paths and calculate the average score.
+        
+        Args:
+            image_paths (list): List of image file paths to analyze.
+            threshold (float): Threshold for determining the overall result.
+            
+        Returns:
+            bool: True if the average score exceeds the threshold, False otherwise.
+        """
+        if not image_paths or not isinstance(image_paths, list):
+            raise ValueError("Invalid input: image_paths must be a list of valid image file paths.")
+        
+        total_images = len(image_paths)
+        if total_images == 0:
+            print("No images to analyze.")
+            return False
+        
+        total_score = 0
+        
+        for image_path in image_paths:
+            if not os.path.exists(image_path):
+                print(f"Image '{image_path}' does not exist.")
+                continue
+            
+            print("***** Analyzing new image file *****")
+            content = self.is_real_object_image(image_path)
+            # Add 1 to the score if the image is classified as a real object, otherwise 0
+            total_score += 1 if content[0] else 0
+        
+        # Calculate the average score
+        average_score = total_score / total_images
+        print(f"Average score: {average_score}")
+        
+        # Return True if the average score exceeds the threshold, otherwise False
+        return average_score > threshold
