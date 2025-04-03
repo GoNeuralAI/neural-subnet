@@ -14,3 +14,5 @@ python-dotenv>=1.0.0
 boto3>=1.26.0
 wandb
 sentence-transformers==3.4.1
+SciPy==1.15.2
+pytesseract
