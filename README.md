@@ -110,20 +110,26 @@ sudo apt update && sudo apt install jq
 sudo apt install npm && sudo npm install pm2 -g && pm2 update
 ```
 
-3. Populate the .env file with your credentials:
+3. Install Tesseract OCR
+```commandline
+sudo apt update
+sudo apt install tesseract-ocr
+```
+
+4. Populate the .env file with your credentials:
 ```bash
 cp .env.template .env
 ```
 The Claude API key is utilized for generating image-to-text outputs through Anthropic's Claude 3.5 Haiku service
 
-4. Then install the `Neural` package: `pip install -e .`
+5. Then install the `Neural` package: `pip install -e .`
 
 #### Validation endpoint with PM2
 ```commandline
 cd validation
 
-python3 -m venv gen-venv
-source gen-venv/bin/activate
+python3 -m venv val-e-venv
+source val-e-venv/bin/activate
 
 pip install git+https://github.com/openai/CLIP.git
 pip install git+https://github.com/facebookresearch/pytorch3d.git

@@ -9,6 +9,7 @@ from validation.quality_model import QualityModel
 from validation.text_similarity_model import TextSimilarityModel
 from claude_integration import get_render_img_descs, get_prev_img_desc
 from rendering import render, load_image
+from image_insight import ImageAnalysisToolkit
 
 DATA_DIR = './validation/results'
 EXTRA_PROMPT = 'anime'
@@ -20,6 +21,7 @@ class Validation:
         self.image_model = ImageModel()
         self.quality_model = QualityModel()
         self.text_similarity_model = TextSimilarityModel()
+        self.image_vision_model = ImageAnalysisToolkit()
         
         self.init_model()
         
@@ -31,7 +33,7 @@ class Validation:
             id = data.uuid
             print(prompt, id)
             print("Rendering 3D mesh file.....")    
-            rendered_images, before_images = render(prompt, id)
+            rendered_images, before_images, render_image_paths = render(prompt, id)
             
             image_descs = get_render_img_descs()
             print(image_descs)
@@ -40,7 +42,17 @@ class Validation:
             prompt_vector = self.text_similarity_model.fetch_vectors([prompt])[0]
             
             prev_img_path = os.path.join(DATA_DIR, f"{data.uuid}/preview.jpeg")
-            print("Loading preview image.....")            
+
+            image_paths = render_image_paths + [prev_img_path]
+
+            is_like_real_object_image = self.image_vision_model.analyze_images(image_paths)
+
+            print(f"Is real object image: {is_like_real_object_image}")
+
+            if is_like_real_object_image == False:
+                return ValidateResponse(score=0)
+
+            print("Loading preview image.....")
             prev_img = load_image(prev_img_path)
             prev_img_desc = get_prev_img_desc(prev_img_path)
             prev_img_vector = self.text_similarity_model.fetch_vectors([prev_img_desc])
