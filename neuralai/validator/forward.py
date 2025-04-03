@@ -55,7 +55,7 @@ async def forward_synthetic(self, synapse: NATextSynapse = None) -> NATextSynaps
     self.status = "validation"
     start_time = time.time()
     loop_time = self.config.neuron.task_period
-    timeout = (int)(loop_time / 4)
+    timeout = (int)(loop_time / 8)
     val_scores = []
 
     if not self.config.wandb.off:
@@ -160,7 +160,7 @@ async def forward_organic(self, synapse: NATextSynapse = None) -> NATextSynapse:
         self.status = "validation"
         start_time = time.time()
         loop_time = self.config.neuron.task_period
-        timeout = (int)(loop_time / 3)
+        timeout = (int)(loop_time / 8)
         if synapse.prompt_text is None:
             raise Exception("None prompt of organic synapse.")
         nas = NATextSynapse(prompt_text=synapse.prompt_text, timeout=timeout)
