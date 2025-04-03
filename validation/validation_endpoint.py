@@ -21,7 +21,7 @@ class Validation:
         self.image_model = ImageModel()
         self.quality_model = QualityModel()
         self.text_similarity_model = TextSimilarityModel()
-        self.image_vision_model = ImageAnalysisToolkit
+        self.image_vision_model = ImageAnalysisToolkit()
         
         self.init_model()
         
@@ -43,7 +43,7 @@ class Validation:
             
             prev_img_path = os.path.join(DATA_DIR, f"{data.uuid}/preview.jpeg")
 
-            image_paths = render_image_paths + prev_img_path
+            image_paths = render_image_paths + [prev_img_path]
 
             is_like_real_object_image = self.image_vision_model.analyze_images(image_paths)
 

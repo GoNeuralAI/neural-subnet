@@ -5,7 +5,7 @@ from scipy.stats import entropy
 import os
 
 class ImageAnalysisToolkit:
-    def __init__(self, preview_model_dir, log_file_path):
+    def __init__(self):
         self.count = 0
         self.success = 0
 

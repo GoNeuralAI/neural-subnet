@@ -86,7 +86,7 @@ def get_image_description(image_path, max_retries=20):
         return None
     
     except Exception as e:
-        print("Failed during Claude integration.")
+        print(f"Failed during Claude integration. error: {e}")
 
 
 def get_render_img_descs():
