@@ -26,7 +26,7 @@ class ImageAnalysisToolkit:
         img = Image.open(image_path)
         text = pytesseract.image_to_string(img)
         print(f"text_value: {len(text.strip())}")
-        return len(text.strip()) < 10
+        return len(text.strip()) < 5
 
     @staticmethod
     def is_likely_object_image(image_path, min_edge_ratio=0.01, max_edge_ratio=0.2):
@@ -69,18 +69,19 @@ class ImageAnalysisToolkit:
         entropy_value, entropy_result = ImageAnalysisToolkit.calculate_image_entropy(image_path)
         histogram_result = ImageAnalysisToolkit.analyze_color_histogram(image_path)
         text_result = ImageAnalysisToolkit.has_text_content(image_path)
-        positive_counts = sum([edge_result, entropy_result, histogram_result, text_result])
-        confidence = positive_counts / 4.0
+        positive_counts = sum([edge_result, entropy_result, histogram_result])
+        confidence = positive_counts / 3.0
         reason = "Undetermined"
-        if not edge_result and confidence < 0.75:
+        if not edge_result and confidence < 0.66:
             reason = "Unusual edge pattern"
-        elif not entropy_result and confidence < 0.75:
+        elif not entropy_result and confidence < 0.66:
             reason = "Low image entropy"
-        elif not histogram_result and confidence < 0.75:
+        elif not histogram_result and confidence < 0.66:
             reason = "Limited color distribution"
-        elif not text_result and confidence < 0.75:
+        if text_result:
+            confidence = 0
             reason = "has texts"
-        is_real_object = confidence >= 0.75
+        is_real_object = confidence > 0.66
         print(f"final result: {is_real_object}")
         return is_real_object, confidence, reason
 
