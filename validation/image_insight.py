@@ -26,7 +26,7 @@ class ImageAnalysisToolkit:
         img = Image.open(image_path)
         text = pytesseract.image_to_string(img)
         print(f"text_value: {len(text.strip())}")
-        return len(text.strip()) < 5
+        return len(text.strip()) > 5
 
     @staticmethod
     def is_likely_object_image(image_path, min_edge_ratio=0.01, max_edge_ratio=0.2):
