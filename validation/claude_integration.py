@@ -53,7 +53,7 @@ def get_image_description(image_path, max_retries=20):
                         },
                         {
                             "type": "text",
-                            "text": "Describe this image in one concise sentence. This Prompt will be used as a 3D model generation prompt, so You need to write it as an object description, not the image descriptioin"
+                            "text": "If this image contains ANY text, respond with ONLY the exact phrase 'Texted Image' and nothing else. If there is NO text in the image, describe the physical object shown in one concise sentence suitable for 3D modeling. Focus on the object itself, not the photographic qualities."
                         }
                     ],
                 }
